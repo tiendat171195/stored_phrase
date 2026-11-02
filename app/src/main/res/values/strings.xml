@@ -46,7 +46,7 @@
     <string name="unlock">Unlock</string>
 
     <!-- Vault list -->
-    <string name="empty_vault">No seed phrases yet.</string>
+    <string name="empty_vault">No seed phrases yet. Tap \"Add seed phrase\" to store one.</string>
     <string name="lock_now">Lock</string>
     <string name="has_passphrase_short">passphrase</string>
     <string name="verified_never">Paper copy not checked yet</string>
@@ -65,6 +65,79 @@
     <string name="key_invalidated_title">Vault keys were destroyed</string>
     <string name="key_invalidated_text">Android permanently invalidated the keys in the secure chip, usually because the screen lock was removed or reset. The encrypted data on this phone can no longer be decrypted.</string>
     <string name="key_invalidated_action">Wipe and create a new vault</string>
+
+    <!-- Common (M2) -->
+    <string name="common_close">Close</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_save">Save</string>
+    <string name="common_done">Done</string>
+    <string name="common_retry">Try again</string>
+    <string name="settings_title">Settings</string>
+    <string name="add_seed">Add seed phrase</string>
+    <string name="default_label">Seed %d</string>
+
+    <!-- Entry detail -->
+    <string name="detail_hidden_hint">The words are encrypted. Authenticate to decrypt them inside the secure chip.</string>
+    <string name="reveal_button">Show words (authenticate)</string>
+    <string name="tap_word_hint">Tap a word to show or hide it, or hold the button below to show all.</string>
+    <string name="hold_to_show_all">Hold to show all words</string>
+    <string name="hold_to_view">Hold to view</string>
+    <string name="auto_hide_in">Hides automatically in %d s</string>
+    <string name="hide_now">Hide now</string>
+    <string name="bip39_passphrase_label">BIP39 passphrase (25th word)</string>
+    <string name="notes_label">Notes</string>
+    <string name="verify_paper">Check paper copy</string>
+    <string name="updated_at">Updated %s</string>
+    <string name="delete_confirm_title">Delete this seed phrase?</string>
+    <string name="delete_confirm_text">It will be permanently removed from this phone. Make sure you have another copy.</string>
+    <string name="paper_reminder">Keep a paper copy somewhere safe. This vault is bound to this phone and cannot be recovered if the phone is lost.</string>
+
+    <!-- Editor -->
+    <string name="editor_new_title">New seed phrase</string>
+    <string name="editor_edit_title">Edit seed phrase</string>
+    <string name="label_hint">Name (e.g. Ledger Nano X)</string>
+    <string name="word_count_label">Number of words</string>
+    <string name="typing_word">Word %d:</string>
+    <string name="checksum_incomplete">Entered: %1$d / %2$d</string>
+    <string name="checksum_ok">✓ Valid BIP39 checksum</string>
+    <string name="checksum_bad">✗ Invalid checksum: at least one word is wrong</string>
+    <string name="optional_section">BIP39 passphrase and notes</string>
+    <string name="passphrase_hint">only if your wallet uses one</string>
+    <string name="show_text">Show passphrase</string>
+    <string name="hide_text">Hide passphrase</string>
+    <string name="discard_title">Discard changes?</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Keep editing</string>
+    <string name="keyboard_no_match">No BIP39 word starts like this</string>
+    <string name="keyboard_backspace">Backspace</string>
+
+    <!-- Paper copy quiz -->
+    <string name="quiz_title">Check paper copy</string>
+    <string name="quiz_intro">Type the requested words from your paper copy. The correct answers are never shown.</string>
+    <string name="quiz_question">Word #%d</string>
+    <string name="quiz_progress">Question %1$d of %2$d</string>
+    <string name="quiz_success">Your paper copy matches.</string>
+    <string name="quiz_fail">Mismatch at word #%s. Check your paper copy.</string>
+
+    <!-- Settings -->
+    <string name="auto_lock_title">Auto-lock after inactivity</string>
+    <string name="lock_30s">30 seconds</string>
+    <string name="lock_1m">1 minute</string>
+    <string name="lock_2m">2 minutes</string>
+    <string name="lock_5m">5 minutes</string>
+    <string name="key_protection_title">Key protection</string>
+    <string name="key_protection_strongbox_udr">Keys live in StrongBox, need your fingerprint or PIN, and are unusable while the phone is locked.</string>
+    <string name="key_protection_strongbox">Keys live in StrongBox and need your fingerprint or PIN.</string>
+    <string name="key_protection_tee">Keys live in the TEE, not StrongBox. Testing only.</string>
+    <string name="wipe_title">Wipe vault</string>
+    <string name="wipe_desc">Destroys the keys inside the secure chip. Everything stored becomes unreadable immediately.</string>
+    <string name="wipe_confirm_title">Wipe everything?</string>
+    <string name="wipe_confirm_text">Type %s to confirm. This cannot be undone.</string>
+    <string name="wipe_confirm_word">WIPE</string>
+    <string name="about_title">About</string>
+    <string name="about_version">Version %s</string>
+    <string name="no_network_note">This app has no internet permission. Nothing ever leaves your phone.</string>
 
     <!-- Errors -->
     <string name="error_generic">Something went wrong: %s</string>

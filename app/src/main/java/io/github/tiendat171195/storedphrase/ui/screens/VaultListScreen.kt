@@ -1,7 +1,7 @@
 package io.github.tiendat171195.storedphrase.ui.screens
 
 import android.text.format.DateUtils
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -41,10 +45,20 @@ fun VaultListScreen(vm: AppViewModel) {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
+                    IconButton(onClick = { vm.openSettings() }) {
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                    }
                     IconButton(onClick = { vm.lock() }) {
                         Icon(Icons.Filled.Lock, contentDescription = stringResource(R.string.lock_now))
                     }
                 },
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { vm.startNewEntry() },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.add_seed)) },
             )
         },
     ) { padding ->
@@ -69,11 +83,11 @@ fun VaultListScreen(vm: AppViewModel) {
                     )
                 }
             } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 96.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp),
-                ) {
-                    items(entries, key = { it.id }) { entry -> EntryRow(entry) }
+                LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
+                    items(entries, key = { it.id }) { entry ->
+                        EntryRow(entry, modifier = Modifier.clickable { vm.openEntry(entry.id) })
+                        HorizontalDivider()
+                    }
                 }
             }
         }
@@ -84,12 +98,23 @@ fun VaultListScreen(vm: AppViewModel) {
 private fun EntryRow(entry: IndexEntry, modifier: Modifier = Modifier) {
     val words = pluralStringResource(R.plurals.words_count, entry.wordCount, entry.wordCount)
     val extra = if (entry.hasPassphrase) " · " + stringResource(R.string.has_passphrase_short) else ""
-    val verified = entry.verifiedAt?.let {
-        stringResource(R.string.verified_at, DateUtils.getRelativeTimeSpanString(it).toString())
-    } ?: stringResource(R.string.verified_never)
+    val verifiedAt = entry.verifiedAt
     ListItem(
         headlineContent = { Text(entry.label) },
-        supportingContent = { Text("$words$extra\n$verified") },
+        supportingContent = {
+            Column {
+                Text(words + extra)
+                Text(
+                    text = if (verifiedAt == null) {
+                        stringResource(R.string.verified_never)
+                    } else {
+                        stringResource(R.string.verified_at, DateUtils.getRelativeTimeSpanString(verifiedAt).toString())
+                    },
+                    color = if (verifiedAt == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        },
         modifier = modifier,
     )
 }

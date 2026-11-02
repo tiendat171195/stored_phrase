@@ -15,8 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import io.github.tiendat171195.storedphrase.R
 import io.github.tiendat171195.storedphrase.ui.screens.DeviceCheckScreen
+import io.github.tiendat171195.storedphrase.ui.screens.EditorScreen
+import io.github.tiendat171195.storedphrase.ui.screens.EntryDetailScreen
 import io.github.tiendat171195.storedphrase.ui.screens.KeyInvalidatedScreen
 import io.github.tiendat171195.storedphrase.ui.screens.LockedScreen
+import io.github.tiendat171195.storedphrase.ui.screens.QuizScreen
+import io.github.tiendat171195.storedphrase.ui.screens.SettingsScreen
 import io.github.tiendat171195.storedphrase.ui.screens.VaultListScreen
 
 @Composable
@@ -24,11 +28,15 @@ fun StoredPhraseRoot(vm: AppViewModel) {
     BackHandler(enabled = vm.backStack.size > 1) { vm.back() }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (vm.screen) {
+        when (val screen = vm.screen) {
             Screen.DeviceCheck -> DeviceCheckScreen(vm)
             Screen.Locked -> LockedScreen(vm)
             Screen.VaultList -> VaultListScreen(vm)
             Screen.KeyInvalidated -> KeyInvalidatedScreen(vm)
+            Screen.Settings -> SettingsScreen(vm)
+            is Screen.EntryDetail -> EntryDetailScreen(vm, screen.id)
+            is Screen.Editor -> EditorScreen(vm)
+            is Screen.Quiz -> QuizScreen(vm)
         }
         if (vm.busy) {
             LinearProgressIndicator(

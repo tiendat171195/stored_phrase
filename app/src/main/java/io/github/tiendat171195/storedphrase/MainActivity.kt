@@ -42,9 +42,14 @@ class MainActivity : FragmentActivity() {
         container.session.touch()
     }
 
+    override fun onStart() {
+        super.onStart()
+        container.session.onForegroundChanged(true)
+    }
+
     override fun onStop() {
         super.onStop()
         // Leaving the app or turning the screen off locks the vault (unless a system prompt caused it).
-        if (!isChangingConfigurations) container.session.onAppBackgrounded()
+        if (!isChangingConfigurations) container.session.onForegroundChanged(false)
     }
 }

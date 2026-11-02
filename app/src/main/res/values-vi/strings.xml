@@ -45,7 +45,7 @@
     <string name="unlock">Mở khoá</string>
 
     <!-- Vault list -->
-    <string name="empty_vault">Chưa có seed phrase nào.</string>
+    <string name="empty_vault">Chưa có seed phrase nào. Nhấn \"Thêm seed phrase\" để lưu.</string>
     <string name="lock_now">Khoá</string>
     <string name="has_passphrase_short">có passphrase</string>
     <string name="verified_never">Chưa kiểm tra bản giấy</string>
@@ -63,6 +63,79 @@
     <string name="key_invalidated_title">Khoá của kho đã bị huỷ</string>
     <string name="key_invalidated_text">Android đã huỷ vĩnh viễn khoá trong chip bảo mật, thường do khoá màn hình bị gỡ hoặc đặt lại. Dữ liệu đã mã hoá trên máy này không thể giải mã được nữa.</string>
     <string name="key_invalidated_action">Xoá và tạo kho mới</string>
+
+    <!-- Common (M2) -->
+    <string name="common_close">Đóng</string>
+    <string name="common_delete">Xoá</string>
+    <string name="common_edit">Sửa</string>
+    <string name="common_save">Lưu</string>
+    <string name="common_done">Xong</string>
+    <string name="common_retry">Thử lại</string>
+    <string name="settings_title">Cài đặt</string>
+    <string name="add_seed">Thêm seed phrase</string>
+    <string name="default_label">Seed %d</string>
+
+    <!-- Entry detail -->
+    <string name="detail_hidden_hint">Các từ đang được mã hoá. Xác thực để giải mã bên trong chip bảo mật.</string>
+    <string name="reveal_button">Hiện các từ (cần xác thực)</string>
+    <string name="tap_word_hint">Chạm vào một từ để hiện hoặc ẩn từ đó, hoặc giữ nút bên dưới để xem tất cả.</string>
+    <string name="hold_to_show_all">Giữ để xem tất cả các từ</string>
+    <string name="hold_to_view">Giữ để xem</string>
+    <string name="auto_hide_in">Tự ẩn sau %d giây</string>
+    <string name="hide_now">Ẩn ngay</string>
+    <string name="bip39_passphrase_label">Passphrase BIP39 (từ thứ 25)</string>
+    <string name="notes_label">Ghi chú</string>
+    <string name="verify_paper">Kiểm tra bản giấy</string>
+    <string name="updated_at">Cập nhật %s</string>
+    <string name="delete_confirm_title">Xoá seed phrase này?</string>
+    <string name="delete_confirm_text">Seed sẽ bị xoá vĩnh viễn khỏi máy này. Hãy chắc chắn bạn còn bản sao khác.</string>
+    <string name="paper_reminder">Hãy cất một bản giấy ở nơi an toàn. Kho này gắn chặt với máy và không thể khôi phục nếu mất máy.</string>
+
+    <!-- Editor -->
+    <string name="editor_new_title">Seed phrase mới</string>
+    <string name="editor_edit_title">Sửa seed phrase</string>
+    <string name="label_hint">Tên (vd: Ledger Nano X)</string>
+    <string name="word_count_label">Số từ</string>
+    <string name="typing_word">Từ %d:</string>
+    <string name="checksum_incomplete">Đã nhập %1$d/%2$d từ</string>
+    <string name="checksum_ok">✓ Checksum BIP39 hợp lệ</string>
+    <string name="checksum_bad">✗ Sai checksum: có ít nhất một từ bị sai</string>
+    <string name="optional_section">Passphrase BIP39 và ghi chú</string>
+    <string name="passphrase_hint">chỉ nhập nếu ví của bạn có dùng</string>
+    <string name="show_text">Hiện passphrase</string>
+    <string name="hide_text">Ẩn passphrase</string>
+    <string name="discard_title">Bỏ các thay đổi?</string>
+    <string name="discard">Bỏ</string>
+    <string name="keep_editing">Tiếp tục sửa</string>
+    <string name="keyboard_no_match">Không có từ BIP39 nào bắt đầu như vậy</string>
+    <string name="keyboard_backspace">Xoá lùi</string>
+
+    <!-- Paper copy quiz -->
+    <string name="quiz_title">Kiểm tra bản giấy</string>
+    <string name="quiz_intro">Nhập các từ được hỏi theo bản giấy của bạn. App không bao giờ hiện đáp án.</string>
+    <string name="quiz_question">Từ số %d</string>
+    <string name="quiz_progress">Câu %1$d/%2$d</string>
+    <string name="quiz_success">Bản giấy khớp.</string>
+    <string name="quiz_fail">Không khớp ở từ số %s. Hãy kiểm tra lại bản giấy.</string>
+
+    <!-- Settings -->
+    <string name="auto_lock_title">Tự khoá khi không thao tác</string>
+    <string name="lock_30s">30 giây</string>
+    <string name="lock_1m">1 phút</string>
+    <string name="lock_2m">2 phút</string>
+    <string name="lock_5m">5 phút</string>
+    <string name="key_protection_title">Mức bảo vệ khoá</string>
+    <string name="key_protection_strongbox_udr">Khoá nằm trong StrongBox, cần vân tay hoặc PIN, và không dùng được khi máy đang khoá.</string>
+    <string name="key_protection_strongbox">Khoá nằm trong StrongBox và cần vân tay hoặc PIN.</string>
+    <string name="key_protection_tee">Khoá nằm trong TEE, không phải StrongBox. Chỉ để thử.</string>
+    <string name="wipe_title">Xoá sạch kho</string>
+    <string name="wipe_desc">Huỷ khoá bên trong chip bảo mật. Toàn bộ dữ liệu đã lưu trở nên không đọc được ngay lập tức.</string>
+    <string name="wipe_confirm_title">Xoá sạch mọi thứ?</string>
+    <string name="wipe_confirm_text">Gõ %s để xác nhận. Không thể hoàn tác.</string>
+    <string name="wipe_confirm_word">XOA</string>
+    <string name="about_title">Thông tin</string>
+    <string name="about_version">Phiên bản %s</string>
+    <string name="no_network_note">App này không có quyền truy cập internet. Không có gì rời khỏi máy của bạn.</string>
 
     <!-- Errors -->
     <string name="error_generic">Có lỗi xảy ra: %s</string>

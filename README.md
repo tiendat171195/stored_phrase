@@ -11,7 +11,19 @@ App Android lưu **cụm từ khôi phục ví crypto (seed phrase BIP39, 12–2
 - Mỗi lần xem một seed đều phải xác thực bằng vân tay (Class 3) hoặc PIN/mật khẩu máy. Lần xác thực đó gắn với đúng thao tác giải mã trong chip.
 - App **không có quyền INTERNET**, chặn chụp và quay màn hình, chặn backup cloud và chặn chuyển dữ liệu qua Smart Switch.
 
-Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe doạ: [docs/SECURITY.md](docs/SECURITY.md)
+Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe doạ: [docs/SECURITY.md](docs/SECURITY.md) · Test trên máy: [docs/DEVICE_TESTING.md](docs/DEVICE_TESTING.md)
+
+## Tính năng (bản hiện tại)
+
+- **Kiểm tra thiết bị.** App tạo khoá thử với đúng cấu hình của kho và mã hoá thử ngay trong chip, sau đó kết luận máy có Knox Vault/StrongBox dùng được hay không.
+- **Nhập seed bằng bàn phím BIP39 riêng của app**, không qua bàn phím hệ thống:
+  - gợi ý theo tiền tố, tự điền khi chỉ còn một từ khớp;
+  - kiểm tra checksum ngay khi đủ từ;
+  - hỗ trợ 12, 15, 18, 21 và 24 từ;
+  - có thể thêm passphrase BIP39 (từ thứ 25) và ghi chú.
+- **Xem seed dạng lưới.** Mỗi lần xem phải xác thực một lần. Các từ hiện dạng che, chạm từng ô hoặc giữ nút để xem; sau 30 giây không thao tác thì tự xoá khỏi bộ nhớ.
+- **Kiểm tra bản giấy.** App hỏi ngẫu nhiên vài vị trí, bạn gõ từ theo bản giấy; app không bao giờ hiện đáp án.
+- **Tự khoá** khi rời app, tắt màn hình hoặc không thao tác (30 giây đến 5 phút, chỉnh được). Có nút **Xoá sạch kho**: huỷ khoá trong chip, toàn bộ bản mã thành rác.
 
 ## Trạng thái
 
@@ -19,7 +31,7 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 |---|---|---|
 | M0 | Khung dự án, hardening manifest, CI | ✅ |
 | M1 | Lõi Knox Vault, màn hình Kiểm tra thiết bị | ✅ |
-| M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ⏳ |
+| M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ✅ chờ test trên máy thật |
 | M3 | File backup mã hoá + script khôi phục Python | — |
 | M4 | Passphrase lớp 2 | — |
 | M5 | Xác minh attestation | — |

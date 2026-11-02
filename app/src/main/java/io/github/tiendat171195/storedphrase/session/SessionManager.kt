@@ -23,6 +23,9 @@ class SessionManager(private val settings: SettingsStore) {
     private val externalFlows = AtomicInteger(0)
 
     @Volatile
+    private var inForeground = true
+
+    @Volatile
     private var lastInteraction = SystemClock.elapsedRealtime()
 
     fun onUnlocked() {
@@ -46,9 +49,17 @@ class SessionManager(private val settings: SettingsStore) {
     fun endExternalFlow() {
         if (externalFlows.decrementAndGet() < 0) externalFlows.set(0)
         touch()
+        // The app was sent to the background while a prompt was open: lock now that it closed.
+        if (!inForeground) onAppBackgrounded()
     }
 
-    fun onAppBackgrounded() {
+    /** Called from Activity onStart/onStop. Going to the background (or screen off) locks. */
+    fun onForegroundChanged(foreground: Boolean) {
+        inForeground = foreground
+        if (!foreground) onAppBackgrounded()
+    }
+
+    private fun onAppBackgrounded() {
         if (isUnlocked && externalFlows.get() == 0) _lockRequests.tryEmit(LockReason.BACKGROUND)
     }
 
