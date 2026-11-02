@@ -1,6 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="debug_banner">BẢN DEBUG: chỉ dùng dữ liệu giả để thử</string>
-    <string name="placeholder_title">Stored Phrase</string>
-    <string name="placeholder_body">Kho seed phrase được bảo vệ bằng Samsung Knox Vault. Đang xây dựng.</string>
+
+    <!-- Common -->
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Huỷ</string>
+    <string name="common_back">Quay lại</string>
+
+    <!-- System authentication prompt -->
+    <string name="auth_unlock_title">Mở khoá Stored Phrase</string>
+    <string name="auth_unlock_subtitle">Giải mã danh sách trong kho</string>
+    <string name="auth_reveal_title">Hiện seed phrase</string>
+    <string name="auth_reveal_subtitle">Giải mã bên trong chip bảo mật</string>
+    <string name="auth_save_title">Lưu seed phrase</string>
+    <string name="auth_save_subtitle">Mã hoá bên trong chip bảo mật</string>
+    <string name="auth_update_title">Xác nhận thay đổi</string>
+    <string name="auth_update_subtitle">Cập nhật danh sách đã mã hoá</string>
+
+    <!-- Device check -->
+    <string name="device_check_title">Kiểm tra thiết bị</string>
+    <string name="check_running">Đang kiểm tra phần cứng bảo mật…</string>
+    <string name="check_strongbox_feature">Phần cứng bảo mật StrongBox</string>
+    <string name="check_lock_screen">Khoá màn hình (PIN, hình vẽ hoặc mật khẩu)</string>
+    <string name="check_biometric">Vân tay mạnh (Class 3)</string>
+    <string name="check_biometric_not_enrolled">Chưa đăng ký vân tay: app sẽ dùng PIN khoá màn hình</string>
+    <string name="check_biometric_unavailable">Không có vân tay mạnh: app sẽ dùng PIN khoá màn hình</string>
+    <string name="check_roundtrip">Mã hoá thử bên trong chip</string>
+    <string name="check_protected_key">Hỗ trợ cấu hình khoá có xác thực</string>
+    <string name="check_needs_lock_screen">Cần đặt khoá màn hình</string>
+    <string name="check_udr_unsupported">Chip này không hỗ trợ \"chỉ dùng khi máy đang mở khoá\". Khoá vẫn luôn cần vân tay hoặc PIN.</string>
+    <string name="device_info">%1$s %2$s · Android %3$s (API %4$d)</string>
+    <string name="verdict_knox">Samsung Knox Vault sẵn sàng.</string>
+    <string name="verdict_strongbox_other">StrongBox sẵn sàng (máy không phải Samsung).</string>
+    <string name="verdict_tee_debug">Không dùng được StrongBox. Bản debug này sẽ dùng TEE (yếu hơn) để bạn thử.</string>
+    <string name="verdict_unsupported">Máy này không dùng được StrongBox nên Stored Phrase không thể bảo vệ seed phrase ở đây.</string>
+    <string name="verdict_need_lock_screen">Hãy đặt khoá màn hình trước (Cài đặt → Màn hình khoá), rồi kiểm tra lại.</string>
+    <string name="create_vault">Tạo kho</string>
+    <string name="create_vault_warning">Khoá được gắn chặt với chip bảo mật của máy này và không bao giờ rời khỏi chip. Gỡ app, reset máy hoặc tắt khoá màn hình sẽ khiến dữ liệu không thể khôi phục. Luôn giữ một bản giấy.</string>
+    <string name="rerun_check">Kiểm tra lại</string>
+
+    <!-- Lock screen -->
+    <string name="locked_title">Kho đang khoá</string>
+    <string name="locked_hint">Dùng vân tay hoặc PIN khoá màn hình.</string>
+    <string name="unlock">Mở khoá</string>
+
+    <!-- Vault list -->
+    <string name="empty_vault">Chưa có seed phrase nào.</string>
+    <string name="lock_now">Khoá</string>
+    <string name="has_passphrase_short">có passphrase</string>
+    <string name="verified_never">Chưa kiểm tra bản giấy</string>
+    <string name="verified_at">Đã kiểm tra bản giấy %s</string>
+    <plurals name="words_count">
+        <item quantity="other">%d từ</item>
+    </plurals>
+
+    <!-- Security badge -->
+    <string name="badge_knox">Knox Vault · StrongBox</string>
+    <string name="badge_strongbox">StrongBox</string>
+    <string name="badge_tee">TEE: chỉ để thử</string>
+
+    <!-- Invalidated keys -->
+    <string name="key_invalidated_title">Khoá của kho đã bị huỷ</string>
+    <string name="key_invalidated_text">Android đã huỷ vĩnh viễn khoá trong chip bảo mật, thường do khoá màn hình bị gỡ hoặc đặt lại. Dữ liệu đã mã hoá trên máy này không thể giải mã được nữa.</string>
+    <string name="key_invalidated_action">Xoá và tạo kho mới</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Có lỗi xảy ra: %s</string>
+    <string name="error_auth_lockout">Thử sai quá nhiều lần. Hãy thử lại sau hoặc dùng PIN khoá màn hình.</string>
+    <string name="error_auth_failed">Xác thực thất bại: %s</string>
+    <string name="error_no_strongbox">Máy này không có StrongBox.</string>
+    <string name="error_no_lock_screen">Hãy đặt khoá màn hình trước.</string>
+    <string name="error_corrupted">Dữ liệu lưu trữ bị hỏng hoặc đã bị can thiệp.</string>
 </resources>

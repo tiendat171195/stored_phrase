@@ -2,6 +2,75 @@
 <resources>
     <string name="app_name" translatable="false">Stored Phrase</string>
     <string name="debug_banner">DEBUG build: use fake test data only</string>
-    <string name="placeholder_title">Stored Phrase</string>
-    <string name="placeholder_body">Seed phrase vault protected by Samsung Knox Vault. Under construction.</string>
+
+    <!-- Common -->
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_back">Back</string>
+
+    <!-- System authentication prompt -->
+    <string name="auth_unlock_title">Unlock Stored Phrase</string>
+    <string name="auth_unlock_subtitle">Decrypt your vault list</string>
+    <string name="auth_reveal_title">Show seed phrase</string>
+    <string name="auth_reveal_subtitle">Decrypt inside the secure chip</string>
+    <string name="auth_save_title">Save seed phrase</string>
+    <string name="auth_save_subtitle">Encrypt inside the secure chip</string>
+    <string name="auth_update_title">Confirm change</string>
+    <string name="auth_update_subtitle">Update the encrypted vault list</string>
+
+    <!-- Device check -->
+    <string name="device_check_title">Device check</string>
+    <string name="check_running">Checking the secure hardware…</string>
+    <string name="check_strongbox_feature">StrongBox secure hardware</string>
+    <string name="check_lock_screen">Screen lock (PIN, pattern or password)</string>
+    <string name="check_biometric">Strong fingerprint (Class 3)</string>
+    <string name="check_biometric_not_enrolled">Not enrolled: your screen lock PIN will be used</string>
+    <string name="check_biometric_unavailable">Not available: your screen lock PIN will be used</string>
+    <string name="check_roundtrip">Test encryption inside the chip</string>
+    <string name="check_protected_key">Protected key settings supported</string>
+    <string name="check_needs_lock_screen">Needs a screen lock</string>
+    <string name="check_udr_unsupported">This chip does not support \"only while unlocked\"; keys still require your fingerprint or PIN.</string>
+    <string name="device_info">%1$s %2$s · Android %3$s (API %4$d)</string>
+    <string name="verdict_knox">Samsung Knox Vault is ready.</string>
+    <string name="verdict_strongbox_other">StrongBox is ready (non-Samsung device).</string>
+    <string name="verdict_tee_debug">No usable StrongBox. This debug build will use the TEE (weaker) so you can test.</string>
+    <string name="verdict_unsupported">This device has no usable StrongBox, so Stored Phrase cannot protect seed phrases here.</string>
+    <string name="verdict_need_lock_screen">Set a screen lock first (Settings → Lock screen), then run the check again.</string>
+    <string name="create_vault">Create vault</string>
+    <string name="create_vault_warning">The keys are bound to this phone\'s secure chip and can never leave it. Uninstalling the app, resetting the phone or turning off the screen lock makes the stored data unrecoverable. Always keep a paper copy.</string>
+    <string name="rerun_check">Run the check again</string>
+
+    <!-- Lock screen -->
+    <string name="locked_title">Vault locked</string>
+    <string name="locked_hint">Use your fingerprint or your screen lock PIN.</string>
+    <string name="unlock">Unlock</string>
+
+    <!-- Vault list -->
+    <string name="empty_vault">No seed phrases yet.</string>
+    <string name="lock_now">Lock</string>
+    <string name="has_passphrase_short">passphrase</string>
+    <string name="verified_never">Paper copy not checked yet</string>
+    <string name="verified_at">Paper copy checked %s</string>
+    <plurals name="words_count">
+        <item quantity="one">%d word</item>
+        <item quantity="other">%d words</item>
+    </plurals>
+
+    <!-- Security badge -->
+    <string name="badge_knox">Knox Vault · StrongBox</string>
+    <string name="badge_strongbox">StrongBox</string>
+    <string name="badge_tee">TEE: testing only</string>
+
+    <!-- Invalidated keys -->
+    <string name="key_invalidated_title">Vault keys were destroyed</string>
+    <string name="key_invalidated_text">Android permanently invalidated the keys in the secure chip, usually because the screen lock was removed or reset. The encrypted data on this phone can no longer be decrypted.</string>
+    <string name="key_invalidated_action">Wipe and create a new vault</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Something went wrong: %s</string>
+    <string name="error_auth_lockout">Too many attempts. Try again later or use your screen lock PIN.</string>
+    <string name="error_auth_failed">Authentication failed: %s</string>
+    <string name="error_no_strongbox">StrongBox is not available on this device.</string>
+    <string name="error_no_lock_screen">Set a screen lock first.</string>
+    <string name="error_corrupted">Stored data is damaged or was tampered with.</string>
 </resources>

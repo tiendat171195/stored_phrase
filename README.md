@@ -18,7 +18,7 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | M0 | Khung dự án, hardening manifest, CI | ✅ |
-| M1 | Lõi Knox Vault, màn hình Kiểm tra thiết bị | ⏳ |
+| M1 | Lõi Knox Vault, màn hình Kiểm tra thiết bị | ✅ |
 | M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ⏳ |
 | M3 | File backup mã hoá + script khôi phục Python | — |
 | M4 | Passphrase lớp 2 | — |
