@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Stored Phrase</string>
+    <string name="debug_banner">DEBUG build: use fake test data only</string>
+    <string name="placeholder_title">Stored Phrase</string>
+    <string name="placeholder_body">Seed phrase vault protected by Samsung Knox Vault. Under construction.</string>
+</resources>

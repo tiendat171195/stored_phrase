@@ -1,0 +1,24 @@
+# Gradle / build output
+.gradle/
+.kotlin/
+build/
+**/build/
+
+# Local configuration (SDK path, release signing secrets)
+local.properties
+keystore.properties
+
+# Release keystores must never be committed.
+# The only keystore in this repo is app/keystores/debug.keystore (test builds only).
+*.jks
+*.keystore
+!app/keystores/debug.keystore
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof

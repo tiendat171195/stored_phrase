@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="debug_banner">BẢN DEBUG: chỉ dùng dữ liệu giả để thử</string>
+    <string name="placeholder_title">Stored Phrase</string>
+    <string name="placeholder_body">Kho seed phrase được bảo vệ bằng Samsung Knox Vault. Đang xây dựng.</string>
+</resources>
