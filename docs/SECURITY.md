@@ -35,7 +35,7 @@
 
 - Emulator không có StrongBox. Bản debug dùng TEE, kèm cảnh báo.
 - Trên đa số Galaxy, nhận diện khuôn mặt là Class 2 (weak) nên không mở được khoá. Chỉ dùng được vân tay hoặc PIN, hình vẽ, mật khẩu máy.
-- Màn hình Kiểm tra thiết bị chỉ để bạn yên tâm, không thay được việc phát hiện máy đã bị root. Xác minh attestation (M5) cũng chạy offline và không tra danh sách thu hồi.
+- Màn hình Kiểm tra thiết bị và phần xác minh attestation chỉ để bạn yên tâm về phần cứng. Attestation được kiểm tra offline (không tra danh sách thu hồi) và chạy ngay trên chính máy đó, nên không thay được việc phát hiện hệ điều hành đã bị xâm nhập. Dù vậy, nó phát hiện được bootloader đã mở khoá hoặc ROM tự ký, vì các thông tin này do phần cứng ký.
 
 ## Báo lỗi bảo mật
 

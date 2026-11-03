@@ -69,7 +69,7 @@ fun VaultListScreen(vm: AppViewModel) {
                 .padding(padding),
         ) {
             DebugBanner()
-            SecurityBadge(vm.keyReport, modifier = Modifier.padding(horizontal = 16.dp))
+            SecurityBadge(vm.keyReport, modifier = Modifier.padding(horizontal = 16.dp), attested = vm.attestation?.passed)
             if (entries.isEmpty()) {
                 Box(
                     modifier = Modifier

@@ -6,6 +6,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.github.tiendat171195.storedphrase.security.AttestationProbe
 import io.github.tiendat171195.storedphrase.security.DeviceSecurityProbe
 import io.github.tiendat171195.storedphrase.security.KnoxVaultKeys
 import org.junit.After
@@ -80,6 +81,18 @@ class KnoxVaultInstrumentedTest {
         cipher.init(Cipher.ENCRYPT_MODE, key)
         // Without a BiometricPrompt bound to this operation the chip refuses to encrypt.
         assertThrows(Exception::class.java) { cipher.doFinal(ByteArray(16)) }
+    }
+
+    @Test
+    fun strongBoxAttestationChainVerifiesAgainstGoogleRoots() {
+        assumeStrongBox()
+        val report = AttestationProbe(context).run()
+        assertTrue(report.error ?: "chain", report.chainValid)
+        assertTrue("root not trusted", report.rootTrusted)
+        assertTrue("not StrongBox", report.strongBox)
+        assertTrue("challenge", report.challengeMatches)
+        assertTrue("application id", report.appIdMatches)
+        // Bootloader / verified boot are reported but not asserted: test phones may be unlocked.
     }
 
     private companion object {

@@ -55,7 +55,7 @@ fun LockedScreen(vm: AppViewModel) {
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                SecurityBadge(vm.keyReport)
+                SecurityBadge(vm.keyReport, attested = vm.attestation?.passed)
                 Button(
                     onClick = { vm.unlock(auth) },
                     enabled = !vm.busy,

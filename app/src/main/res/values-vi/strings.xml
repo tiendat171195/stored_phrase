@@ -203,6 +203,23 @@
     <string name="layer2_too_many_attempts">Sai mật khẩu quá nhiều lần. Bấm hiện mục này lại để thử tiếp (cần vân tay hoặc PIN).</string>
     <string name="layer2_sealing">Đang khoá bằng mật khẩu lớp 2 (Argon2id)…</string>
 
+    <!-- Attestation (M5) -->
+    <string name="badge_attested">đã xác minh</string>
+    <string name="attest_title">Xác minh attestation</string>
+    <string name="attest_running">Đang nhờ phần cứng bảo mật chứng nhận một khoá thử…</string>
+    <string name="attest_not_run">Chưa kiểm tra.</string>
+    <string name="attest_chain">Chuỗi chứng chỉ được ký tới root của Google</string>
+    <string name="attest_strongbox">Khoá được chứng nhận nằm trong StrongBox</string>
+    <string name="attest_levels">Attestation: %1$s · KeyMint: %2$s</string>
+    <string name="attest_challenge">Challenge mới khớp (không phải phát lại)</string>
+    <string name="attest_bootloader">Bootloader đang khoá</string>
+    <string name="attest_verified_boot">Verified boot ở trạng thái Verified</string>
+    <string name="attest_app">Cấp cho đúng app này và khoá ký của nó</string>
+    <string name="attest_details">Attestation phiên bản %1$d · chuỗi gồm %2$d chứng chỉ · bản vá bảo mật %3$s</string>
+    <string name="attest_passed">Đã xác minh: phần cứng bảo mật chứng nhận cho máy này và app này.</string>
+    <string name="attest_failed">Xác minh không đạt. Xem các dòng ở trên.</string>
+    <string name="attest_offline_note">Kiểm tra offline với root Google nhúng sẵn trong app, không tra danh sách thu hồi. Kết quả này giúp bạn yên tâm về phần cứng, nhưng không phát hiện được hệ điều hành đã bị xâm nhập.</string>
+
     <!-- Errors -->
     <string name="error_generic">Có lỗi xảy ra: %s</string>
     <string name="error_auth_lockout">Thử sai quá nhiều lần. Hãy thử lại sau hoặc dùng PIN khoá màn hình.</string>

@@ -205,6 +205,23 @@
     <string name="layer2_too_many_attempts">Too many wrong passphrases. Show the entry again to retry (it needs your fingerprint or PIN).</string>
     <string name="layer2_sealing">Sealing with the layer-2 passphrase (Argon2id)…</string>
 
+    <!-- Attestation (M5) -->
+    <string name="badge_attested">verified</string>
+    <string name="attest_title">Key attestation</string>
+    <string name="attest_running">Asking the secure hardware to vouch for a test key…</string>
+    <string name="attest_not_run">Not checked yet.</string>
+    <string name="attest_chain">Certificate chain signed up to a Google root</string>
+    <string name="attest_strongbox">Key attested inside StrongBox</string>
+    <string name="attest_levels">Attestation: %1$s · KeyMint: %2$s</string>
+    <string name="attest_challenge">Fresh challenge matches (not a replay)</string>
+    <string name="attest_bootloader">Bootloader locked</string>
+    <string name="attest_verified_boot">Verified boot state is Verified</string>
+    <string name="attest_app">Issued to this app and its signing key</string>
+    <string name="attest_details">Attestation version %1$d · chain length %2$d · OS patch level %3$s</string>
+    <string name="attest_passed">Verified: the secure hardware vouches for this phone and this app.</string>
+    <string name="attest_failed">Verification did not pass. See the lines above.</string>
+    <string name="attest_offline_note">Checked offline against the embedded Google roots; revocation lists are not consulted. This reassures you about the hardware but cannot detect an OS that is already compromised.</string>
+
     <!-- Errors -->
     <string name="error_generic">Something went wrong: %s</string>
     <string name="error_auth_lockout">Too many attempts. Try again later or use your screen lock PIN.</string>

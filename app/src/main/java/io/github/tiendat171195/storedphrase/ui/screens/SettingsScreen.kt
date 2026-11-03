@@ -79,7 +79,7 @@ fun SettingsScreen(vm: AppViewModel) {
                 HorizontalDivider()
 
                 Text(stringResource(R.string.key_protection_title), style = MaterialTheme.typography.titleMedium)
-                SecurityBadge(vm.keyReport)
+                SecurityBadge(vm.keyReport, attested = vm.attestation?.passed)
                 val config = vm.keyReport?.config
                 Text(
                     text = when {

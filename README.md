@@ -22,6 +22,10 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
   - hỗ trợ 12, 15, 18, 21 và 24 từ;
   - có thể thêm passphrase BIP39 (từ thứ 25) và ghi chú.
 - **Xem seed dạng lưới.** Mỗi lần xem phải xác thực một lần. Các từ hiện dạng che, chạm từng ô hoặc giữ nút để xem; sau 30 giây không thao tác thì tự xoá khỏi bộ nhớ.
+- **Xác minh attestation (offline)**:
+  - App tạo một khoá thử trong StrongBox, kèm challenge ngẫu nhiên.
+  - Sau đó app kiểm tra chuỗi chứng chỉ tới root của Google (cả root RSA và root EC mới 2025/2026), rồi kiểm tra từng điểm: khoá nằm trong StrongBox, bootloader đang khoá, verified boot = Verified, đúng app và đúng khoá ký.
+  - Đạt hết thì huy hiệu hiện "Knox Vault · StrongBox · đã xác minh".
 - **Kiểm tra bản giấy.** App hỏi ngẫu nhiên vài vị trí, bạn gõ từ theo bản giấy; app không bao giờ hiện đáp án.
 - **Tự khoá** khi rời app, tắt màn hình hoặc không thao tác (30 giây đến 5 phút, chỉnh được). Có nút **Xoá sạch kho**: huỷ khoá trong chip, toàn bộ bản mã thành rác.
 - **Birthday height**: ô riêng cho ví Zcash (như Zodl), được mã hoá cùng seed.
@@ -43,7 +47,7 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 | M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ✅ chờ test trên máy thật |
 | M3 | File backup mã hoá + script khôi phục Python + birthday height | ✅ |
 | M4 | Passphrase lớp 2 | ✅ |
-| M5 | Xác minh attestation | — |
+| M5 | Xác minh attestation | ✅ |
 | M6 | Hoàn thiện, phát hành | — |
 
 ## Yêu cầu thiết bị
@@ -104,4 +108,5 @@ docs/   Kiến trúc, bảo mật, checklist test trên thiết bị
 - Wordlist BIP39 tiếng Anh: [bitcoin/bips](https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt), có kiểm tra SHA-256.
 - Vector test BIP39: [trezor/python-mnemonic](https://github.com/trezor/python-mnemonic) (MIT).
 - Wordlist passphrase: [EFF large wordlist](https://www.eff.org/dice) (CC BY 3.0 US).
-- Argon2id: [Bouncy Castle](https://www.bouncycastle.org/) (MIT).
+- Argon2id, ASN.1: [Bouncy Castle](https://www.bouncycastle.org/) (MIT).
+- Root attestation của Google: [android.googleapis.com/attestation/root](https://android.googleapis.com/attestation/root).

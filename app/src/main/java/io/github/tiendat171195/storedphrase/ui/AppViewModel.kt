@@ -14,6 +14,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.tiendat171195.storedphrase.BuildConfig
 import io.github.tiendat171195.storedphrase.R
 import io.github.tiendat171195.storedphrase.StoredPhraseApp
+import io.github.tiendat171195.storedphrase.core.attestation.AttestationReport
 import io.github.tiendat171195.storedphrase.data.VaultRepository
 import io.github.tiendat171195.storedphrase.core.backup.BackupFormat
 import io.github.tiendat171195.storedphrase.core.backup.BackupFormatException
@@ -84,6 +85,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     var deviceReport: DeviceReport? by mutableStateOf(null)
         private set
     var deviceCheckRunning: Boolean by mutableStateOf(false)
+        private set
+
+    /** Last key attestation verification (device check, or once after unlocking). */
+    var attestation: AttestationReport? by mutableStateOf(null)
         private set
     var busy: Boolean by mutableStateOf(false)
         private set
@@ -176,6 +181,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             deviceCheckRunning = true
             try {
                 deviceReport = withContext(Dispatchers.IO) { container.probe.run() }
+                attestation = withContext(Dispatchers.IO) { container.attestation.run() }
             } finally {
                 deviceCheckRunning = false
             }
@@ -196,6 +202,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         session.onUnlocked()
         keyReport = withContext(Dispatchers.IO) { repository.keyReport() }
         resetTo(Screen.VaultList)
+        if (attestation == null) {
+            viewModelScope.launch { attestation = withContext(Dispatchers.IO) { container.attestation.run() } }
+        }
     }
 
     fun lock() = session.requestLock()

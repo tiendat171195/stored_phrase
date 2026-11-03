@@ -26,6 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.tiendat171195.storedphrase.R
+import io.github.tiendat171195.storedphrase.core.attestation.AttestationReport
+import io.github.tiendat171195.storedphrase.core.attestation.SecurityLevel
+import io.github.tiendat171195.storedphrase.core.attestation.VerifiedBootState
 import io.github.tiendat171195.storedphrase.security.BiometricStatus
 import io.github.tiendat171195.storedphrase.security.DeviceReport
 import io.github.tiendat171195.storedphrase.ui.AppViewModel
@@ -83,6 +86,8 @@ fun DeviceCheckScreen(vm: AppViewModel) {
                     Text(stringResource(R.string.check_running))
                 } else {
                     DeviceChecks(report)
+                    HorizontalDivider()
+                    AttestationChecks(vm.attestation, running = vm.deviceCheckRunning)
                     HorizontalDivider()
                     val verdict = verdict(report, vm.allowTeeFallback)
                     VerdictCard(verdict)
@@ -174,4 +179,56 @@ private fun VerdictCard(verdict: Verdict) {
         Verdict.UNSUPPORTED -> stringResource(R.string.verdict_unsupported) to MaterialTheme.colorScheme.errorContainer
     }
     NoticeCard(text = text, color = color)
+}
+
+@Composable
+private fun AttestationChecks(report: AttestationReport?, running: Boolean) {
+    Text(stringResource(R.string.attest_title), style = MaterialTheme.typography.titleMedium)
+    if (report == null) {
+        Text(stringResource(if (running) R.string.attest_running else R.string.attest_not_run), style = MaterialTheme.typography.bodySmall)
+        return
+    }
+    fun state(ok: Boolean) = if (ok) CheckState.OK else CheckState.FAIL
+    val description = report.description
+    CheckRow(
+        title = stringResource(R.string.attest_chain),
+        state = state(report.chainValid && report.rootTrusted),
+        detail = report.rootName ?: report.error,
+    )
+    CheckRow(
+        title = stringResource(R.string.attest_strongbox),
+        state = state(report.strongBox),
+        detail = description?.let {
+            stringResource(
+                R.string.attest_levels,
+                SecurityLevel.name(it.attestationSecurityLevel),
+                SecurityLevel.name(it.keyMintSecurityLevel),
+            )
+        },
+    )
+    CheckRow(title = stringResource(R.string.attest_challenge), state = state(report.challengeMatches))
+    CheckRow(title = stringResource(R.string.attest_bootloader), state = state(report.bootloaderLocked))
+    CheckRow(
+        title = stringResource(R.string.attest_verified_boot),
+        state = state(report.verifiedBoot),
+        detail = description?.rootOfTrust?.let { VerifiedBootState.name(it.verifiedBootState) },
+    )
+    CheckRow(title = stringResource(R.string.attest_app), state = state(report.appIdMatches))
+    if (description != null) {
+        Text(
+            text = stringResource(
+                R.string.attest_details,
+                description.attestationVersion,
+                report.chainLength,
+                description.osPatchLevel?.toString() ?: "-",
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    NoticeCard(
+        text = stringResource(if (report.passed) R.string.attest_passed else R.string.attest_failed),
+        color = if (report.passed) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+    )
+    Text(stringResource(R.string.attest_offline_note), style = MaterialTheme.typography.bodySmall)
 }

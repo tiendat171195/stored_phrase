@@ -141,3 +141,17 @@ Knox Vault (sp_secret_v1) ── AES-256-GCM ──► phong bì SPL2 ── Arg
 - **Sai mật khẩu 5 lần:** app bỏ phong bì khỏi bộ nhớ, muốn thử tiếp phải xác thực Knox Vault lại. Mỗi lần thử tốn khoảng 64 MiB RAM và vài giây, nên dò mật khẩu ngay trong app rất chậm.
 - **Sửa mục:** app không giữ mật khẩu lớp 2 trong bộ nhớ, nên muốn lưu phải nhập lại (giữ như cũ hoặc đổi mới).
 - **Backup:** mục lớp 2 được xuất nguyên phong bì (loại 2), không cần biết mật khẩu lớp 2. Khi khôi phục vẫn cần đúng mật khẩu đó.
+
+## Xác minh attestation
+
+Khoá AES không có attestation. Vì vậy app tạo một khoá thử `sp_attest_probe` (EC P-256) trong StrongBox, kèm `setAttestationChallenge(32 byte ngẫu nhiên)`, rồi lấy chuỗi chứng chỉ của khoá này và xoá khoá đi. `AttestationVerifier` (trong `:core`, test trên JVM bằng chuỗi chứng chỉ giả lập) kiểm tra:
+
+1. Mỗi chứng chỉ được ký bởi chứng chỉ kế tiếp; root tự ký; các chứng chỉ CA còn hạn.
+2. Khoá công khai của root trùng với một trong hai root Google nhúng sẵn: RSA-4096, và "Key Attestation CA1" ECDSA P-384 dùng cho chuỗi mới từ 02/2026.
+3. Extension KeyDescription (OID `1.3.6.1.4.1.11129.2.1.17`):
+   - `attestationSecurityLevel` và `keyMintSecurityLevel` đều là StrongBox;
+   - challenge khớp;
+   - `RootOfTrust` (bắt buộc là hardware-enforced) có `deviceLocked = true` và `verifiedBootState = Verified`;
+   - `attestationApplicationId` chứa đúng package và SHA-256 khoá ký của app.
+
+App chạy kiểm tra này ở màn hình Kiểm tra thiết bị, và một lần ở nền sau khi mở khoá (để hiện huy hiệu "đã xác minh"). Giới hạn: kiểm tra offline (không tra danh sách thu hồi của Google), và chạy ngay trên chính máy được kiểm tra.

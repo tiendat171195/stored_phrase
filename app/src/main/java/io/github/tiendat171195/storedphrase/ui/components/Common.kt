@@ -41,18 +41,19 @@ fun DebugBanner(modifier: Modifier = Modifier) {
     }
 }
 
-/** Where the vault keys live: Knox Vault / StrongBox, or TEE on debug builds. */
+/** Where the vault keys live: Knox Vault / StrongBox, or TEE on debug builds; plus attestation result. */
 @Composable
-fun SecurityBadge(report: VaultCrypto.KeyReport?, modifier: Modifier = Modifier) {
+fun SecurityBadge(report: VaultCrypto.KeyReport?, modifier: Modifier = Modifier, attested: Boolean? = null) {
     if (report == null) return
     val samsung = Build.MANUFACTURER.equals("samsung", ignoreCase = true)
-    val (label, good) = when {
+    val (base, good) = when {
         report.securityLevel == KeyProperties.SECURITY_LEVEL_STRONGBOX && samsung ->
             stringResource(R.string.badge_knox) to true
         report.securityLevel == KeyProperties.SECURITY_LEVEL_STRONGBOX ->
             stringResource(R.string.badge_strongbox) to true
         else -> stringResource(R.string.badge_tee) to false
     }
+    val label = if (good && attested == true) base + " · " + stringResource(R.string.badge_attested) else base
     AssistChip(
         onClick = {},
         label = { Text(label) },

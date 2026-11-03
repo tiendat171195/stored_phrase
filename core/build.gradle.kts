@@ -22,5 +22,7 @@ dependencies {
     implementation(libs.bouncycastle.prov)
 
     testImplementation(libs.kotlin.test)
+    // Test only: builds synthetic attestation certificate chains.
+    testImplementation(libs.bouncycastle.pkix)
     testImplementation(libs.junit)
 }
