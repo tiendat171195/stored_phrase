@@ -22,3 +22,7 @@ captures/
 .externalNativeBuild/
 .cxx/
 *.hprof
+
+# Python
+__pycache__/
+*.pyc
