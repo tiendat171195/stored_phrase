@@ -9,6 +9,7 @@ import io.github.tiendat171195.storedphrase.core.vault.BlobFormatException
 import io.github.tiendat171195.storedphrase.core.vault.EntryCodec
 import io.github.tiendat171195.storedphrase.core.vault.EntryFormatException
 import io.github.tiendat171195.storedphrase.core.vault.IndexEntry
+import io.github.tiendat171195.storedphrase.core.vault.Layer2Envelope
 import io.github.tiendat171195.storedphrase.core.vault.SeedSecret
 import io.github.tiendat171195.storedphrase.core.vault.VaultIndex
 import io.github.tiendat171195.storedphrase.core.vault.VaultIndexCodec
@@ -39,6 +40,7 @@ class VaultRepository(
         val hasPassphrase: Boolean,
         val hasNotes: Boolean,
         val hasBirthday: Boolean,
+        val layer2: Boolean = false,
         val createdAt: Long? = null,
         val updatedAt: Long? = null,
         val verifiedAt: Long? = null,
@@ -61,19 +63,51 @@ class VaultRepository(
         return withIndexAuth(auth) { readIndex() }
     }
 
+    /** Result of decrypting an entry inside StrongBox. */
+    sealed interface RevealResult {
+        class Plain(val secret: SeedSecret) : RevealResult
+
+        /** Layer-2 entry: the envelope still needs the entry's own passphrase ([openLayer2]). Caller wipes it. */
+        class Locked(val envelope: ByteArray) : RevealResult
+    }
+
     /** Decrypts one entry inside StrongBox. Needs a fresh authentication bound to this operation. */
-    suspend fun reveal(auth: Authenticator, entry: IndexEntry): SeedSecret {
+    suspend fun reveal(auth: Authenticator, entry: IndexEntry): RevealResult {
         val plaintext = decryptContent(auth, entry, AuthReason.REVEAL, null)
+        if (entry.layer2) {
+            try {
+                parse { Layer2Envelope.validate(plaintext) }
+            } catch (e: Exception) {
+                plaintext.fill(0)
+                throw e
+            }
+            return RevealResult.Locked(plaintext)
+        }
         try {
-            return decodeChecked(plaintext, entry.wordCount)
+            return RevealResult.Plain(decodeChecked(plaintext, entry.wordCount))
         } finally {
             plaintext.fill(0)
         }
     }
 
     /**
+     * Opens a layer-2 envelope (Argon2id + AES-GCM, no Knox Vault involved).
+     * @throws Layer2WrongPassphraseException for a wrong passphrase.
+     */
+    suspend fun openLayer2(entry: IndexEntry, envelope: ByteArray, passphrase: CharArray): SeedSecret =
+        withContext(Dispatchers.Default) {
+            val inner = parse { Layer2Envelope.open(envelope, passphrase) }
+            try {
+                decodeChecked(inner, entry.wordCount)
+            } finally {
+                inner.fill(0)
+            }
+        }
+
+    /**
      * Encrypts [secret] into a new blob (copy-on-write), commits the index, then removes the old blob.
-     * The caller still owns [secret] and must wipe it.
+     * With [layer2Passphrase], the content is first sealed in a layer-2 envelope.
+     * The caller still owns [secret] and the passphrase and must wipe them.
      */
     suspend fun save(
         auth: Authenticator,
@@ -81,19 +115,26 @@ class VaultRepository(
         existing: IndexEntry?,
         label: String,
         secret: SeedSecret,
+        layer2Passphrase: CharArray? = null,
     ): VaultIndex {
         val plaintext = EntryCodec.encode(secret)
+        var content = plaintext
         try {
+            if (layer2Passphrase != null) {
+                content = withContext(Dispatchers.Default) { Layer2Envelope.seal(plaintext, layer2Passphrase) }
+            }
             val meta = NewEntry(
                 label = label,
                 wordCount = secret.wordCount,
                 hasPassphrase = secret.hasPassphrase,
                 hasNotes = secret.hasNotes,
                 hasBirthday = secret.hasBirthday,
+                layer2 = layer2Passphrase != null,
             )
-            return storeContent(auth, index, existing, meta, plaintext, AuthReason.SAVE, null)
+            return storeContent(auth, index, existing, meta, content, AuthReason.SAVE, null)
         } finally {
             plaintext.fill(0)
+            content.fill(0)
         }
     }
 
@@ -135,7 +176,9 @@ class VaultRepository(
                     updatedAt = entry.updatedAt,
                     verifiedAt = entry.verifiedAt,
                 )
-                out.add(BackupFormat.Entry(BackupFormat.Kind.PLAIN, meta, content))
+                // Layer-2 entries are exported still sealed: the backup never weakens them.
+                val kind = if (entry.layer2) BackupFormat.Kind.LAYER2 else BackupFormat.Kind.PLAIN
+                out.add(BackupFormat.Entry(kind, meta, content))
             }
             onProgress(total, total)
             return out
@@ -166,6 +209,7 @@ class VaultRepository(
                 hasPassphrase = entry.meta.hasPassphrase,
                 hasNotes = entry.meta.hasNotes,
                 hasBirthday = entry.meta.hasBirthday,
+                layer2 = entry.kind == BackupFormat.Kind.LAYER2,
                 createdAt = entry.meta.createdAt,
                 updatedAt = entry.meta.updatedAt,
                 verifiedAt = entry.meta.verifiedAt,
@@ -230,6 +274,7 @@ class VaultRepository(
             hasPassphrase = meta.hasPassphrase,
             hasNotes = meta.hasNotes,
             hasBirthday = meta.hasBirthday,
+            layer2 = meta.layer2,
             createdAt = existing?.createdAt ?: meta.createdAt ?: now,
             updatedAt = meta.updatedAt ?: now,
             // An edited entry must have its paper copy checked again.

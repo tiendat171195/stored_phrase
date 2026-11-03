@@ -11,6 +11,7 @@ import io.github.tiendat171195.storedphrase.core.backup.BackupFormat
 import io.github.tiendat171195.storedphrase.core.backup.PassphraseGenerator
 import io.github.tiendat171195.storedphrase.core.bip39.Bip39Wordlist
 import io.github.tiendat171195.storedphrase.core.bip39.SeedInput
+import io.github.tiendat171195.storedphrase.core.vault.Layer2Envelope
 import io.github.tiendat171195.storedphrase.core.vault.SeedSecret
 
 /** A decrypted entry currently shown on the detail screen. Wiped when hidden, timed out or locked. */
@@ -67,6 +68,19 @@ class SeedDraft(val editingId: String?, label: String, wordCount: Int) {
     /** Wallet birthday height as typed (digits only); empty means none. */
     var birthday by mutableStateOf("")
 
+    /** Layer-2 protection: the entry is sealed with its own passphrase before Knox Vault encryption. */
+    var layer2Enabled by mutableStateOf(false)
+    val layer2Passphrase = SecureChars()
+    val layer2Repeat = SecureChars()
+
+    @StringRes
+    fun layer2Error(): Int? = when {
+        !layer2Enabled -> null
+        layer2Passphrase.length < Layer2Envelope.MIN_PASSPHRASE_LENGTH -> R.string.layer2_too_short
+        !layer2Passphrase.chars.contentEquals(layer2Repeat.chars) -> R.string.layer2_mismatch
+        else -> null
+    }
+
     val birthdayHeight: Long? get() = birthday.toLongOrNull()
     val birthdayValid: Boolean
         get() = birthday.isEmpty() || birthdayHeight?.let { it in 0..SeedSecret.MAX_BIRTHDAY_HEIGHT } == true
@@ -86,6 +100,8 @@ class SeedDraft(val editingId: String?, label: String, wordCount: Int) {
         input.wipe()
         passphrase.wipe()
         notes.wipe()
+        layer2Passphrase.wipe()
+        layer2Repeat.wipe()
         version++
     }
 }
@@ -221,5 +237,24 @@ class BackupImportState {
         preview = null
         passphrase.wipe()
         file = null
+    }
+}
+
+/** What to do once a layer-2 entry has been opened with its passphrase. */
+enum class Layer2Action { VIEW, EDIT, QUIZ }
+
+/** Dialog asking for an entry's layer-2 passphrase. Holds the still-sealed envelope. */
+class Layer2Prompt(val entryId: String, val envelope: ByteArray, val action: Layer2Action) {
+    val passphrase = SecureChars()
+    var wrongAttempts by mutableIntStateOf(0)
+
+    fun wipe() {
+        envelope.fill(0)
+        passphrase.wipe()
+    }
+
+    companion object {
+        /** After this many wrong passphrases the envelope is dropped and Knox Vault must authorise again. */
+        const val MAX_ATTEMPTS = 5
     }
 }

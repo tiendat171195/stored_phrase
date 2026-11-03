@@ -123,3 +123,21 @@ Xem [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
 - **Xuất:** giải mã từng mục bên trong StrongBox (mỗi mục một lần xác thực, vì khoá nội dung gắn với từng thao tác). Sau đó đóng gói, rồi mã hoá bằng Argon2id(passphrase) + AES-256-GCM, và ghi file qua Storage Access Framework.
 - **Nhập:** giải mã file bằng passphrase. App kiểm tra từng mục (định dạng, số từ, checksum BIP39), rồi mã hoá lại từng mục bằng khoá Knox Vault của máy hiện tại (mỗi mục một lần xác thực). Danh sách được commit sau mỗi mục.
 - Bộ chọn file là một activity bên ngoài, nên app đánh dấu "external flow" trong lúc chọn để không tự khoá giữa chừng.
+
+## Mật khẩu lớp 2
+
+Mục có `layer2 = true` trong danh sách được bọc thêm một lớp:
+
+```
+Knox Vault (sp_secret_v1) ── AES-256-GCM ──► phong bì SPL2 ── Argon2id(mật khẩu lớp 2) + AES-256-GCM ──► EntryCodec
+```
+
+- Phong bì SPL2 dùng cùng header 45 byte với file backup (`PassphraseBox`, magic `SPL2`). Xem [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
+- **Xem:**
+  1. Xác thực Knox Vault để ra phong bì.
+  2. Hộp thoại hỏi mật khẩu lớp 2.
+  3. Argon2id chạy khoảng 1–2 giây.
+  4. Hiện seed.
+- **Sai mật khẩu 5 lần:** app bỏ phong bì khỏi bộ nhớ, muốn thử tiếp phải xác thực Knox Vault lại. Mỗi lần thử tốn khoảng 64 MiB RAM và vài giây, nên dò mật khẩu ngay trong app rất chậm.
+- **Sửa mục:** app không giữ mật khẩu lớp 2 trong bộ nhớ, nên muốn lưu phải nhập lại (giữ như cũ hoặc đổi mới).
+- **Backup:** mục lớp 2 được xuất nguyên phong bì (loại 2), không cần biết mật khẩu lớp 2. Khi khôi phục vẫn cần đúng mật khẩu đó.

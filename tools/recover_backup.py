@@ -30,6 +30,7 @@ except ImportError:  # pragma: no cover
     sys.exit("Missing dependencies. Run: python3 -m pip install -r tools/requirements.txt")
 
 MAGIC = b"SPBK"
+LAYER2_MAGIC = b"SPL2"
 HEADER_LENGTH = 45
 WORDLIST_SHA256 = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
 VALID_WORD_COUNTS = (12, 15, 18, 21, 24)
@@ -79,13 +80,14 @@ def check_kdf_params(memory_kib: int, iterations: int, parallelism: int) -> None
         raise BackupError("unsupported Argon2 parameters")
 
 
-def parse_header(data: bytes) -> dict:
+def parse_header(data: bytes, magic: bytes = MAGIC) -> dict:
+    """Header shared by backup files (SPBK) and layer-2 envelopes (SPL2)."""
     if len(data) < HEADER_LENGTH + 16:
-        raise BackupError("file too short")
-    if data[:4] != MAGIC:
-        raise BackupError("not a Stored Phrase backup (bad magic)")
+        raise BackupError("data too short")
+    if data[:4] != magic:
+        raise BackupError(f"bad magic (expected {magic.decode()})")
     if data[4] != 1:
-        raise BackupError(f"unsupported backup version {data[4]}")
+        raise BackupError(f"unsupported version {data[4]}")
     if data[5] != 1:
         raise BackupError(f"unsupported KDF {data[5]}")
     memory_kib, iterations = struct.unpack(">II", data[6:14])
@@ -102,13 +104,17 @@ def parse_header(data: bytes) -> dict:
     }
 
 
-def decrypt_file(data: bytes, passphrase: str) -> bytes:
-    header = parse_header(data)
+def open_box(data: bytes, passphrase: str, magic: bytes) -> bytes:
+    header = parse_header(data, magic)
     key = argon2id(passphrase, header["salt"], header["memory_kib"], header["iterations"], header["parallelism"])
     try:
         return AESGCM(key).decrypt(header["nonce"], data[HEADER_LENGTH:], data[:HEADER_LENGTH])
     except InvalidTag:
-        raise BackupError("wrong passphrase, or the file was modified") from None
+        raise BackupError("wrong passphrase, or the data was modified") from None
+
+
+def decrypt_file(data: bytes, passphrase: str) -> bytes:
+    return open_box(data, passphrase, MAGIC)
 
 
 class Reader:
@@ -180,7 +186,8 @@ def decode_entry(content: bytes, words: list[str]) -> dict:
     }
 
 
-def parse_payload(payload: bytes, words: list[str]) -> dict:
+def parse_payload(payload: bytes, words: list[str], layer2_passphrase=None) -> dict:
+    """layer2_passphrase(meta) returns the entry's layer-2 passphrase, or None to skip it."""
     r = Reader(payload)
     if r.u8() != 1:
         raise BackupError("unsupported payload version")
@@ -193,7 +200,12 @@ def parse_payload(payload: bytes, words: list[str]) -> dict:
         if kind == KIND_PLAIN:
             entries.append({"kind": "plain", "meta": meta, **decode_entry(content, words)})
         elif kind == KIND_LAYER2:
-            entries.append({"kind": "layer2", "meta": meta, "envelope": content.hex()})
+            passphrase = layer2_passphrase(meta) if layer2_passphrase else None
+            if passphrase:
+                inner = open_box(content, passphrase, LAYER2_MAGIC)
+                entries.append({"kind": "layer2", "meta": meta, **decode_entry(inner, words)})
+            else:
+                entries.append({"kind": "layer2", "meta": meta, "locked": True})
         else:
             raise BackupError(f"unknown entry kind {kind}")
     if not r.at_end():
@@ -201,8 +213,8 @@ def parse_payload(payload: bytes, words: list[str]) -> dict:
     return {"manifest": manifest, "entries": entries}
 
 
-def recover(data: bytes, passphrase: str, words: list[str]) -> dict:
-    return parse_payload(decrypt_file(data, passphrase), words)
+def recover(data: bytes, passphrase: str, words: list[str], layer2_passphrase=None) -> dict:
+    return parse_payload(decrypt_file(data, passphrase), words, layer2_passphrase)
 
 
 def format_time(ms: int | None) -> str:
@@ -218,8 +230,8 @@ def print_human(result: dict) -> None:
     for n, entry in enumerate(result["entries"], start=1):
         meta = entry["meta"]
         print(f"[{n}] {meta.get('label')} ({meta.get('wordCount')} words)")
-        if entry["kind"] == "layer2":
-            print("    Protected by a layer-2 passphrase; not decrypted.\n")
+        if entry.get("locked"):
+            print("    Protected by a layer-2 passphrase; skipped.\n")
             continue
         status = "checksum OK" if entry["checksumValid"] else "CHECKSUM INVALID"
         print(f"    {status}")
@@ -246,7 +258,12 @@ def main(argv: list[str] | None = None) -> int:
         data = Path(args.backup).read_bytes()
         parse_header(data)  # fail fast before asking for the passphrase
         passphrase = getpass.getpass("Backup passphrase: ")
-        result = recover(data, passphrase, words)
+
+        def ask_layer2(meta: dict) -> str | None:
+            answer = getpass.getpass(f"Layer-2 passphrase for '{meta.get('label')}' (empty to skip): ")
+            return answer or None
+
+        result = recover(data, passphrase, words, ask_layer2)
     except BackupError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

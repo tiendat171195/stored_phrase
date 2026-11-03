@@ -14,6 +14,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.tiendat171195.storedphrase.BuildConfig
 import io.github.tiendat171195.storedphrase.R
 import io.github.tiendat171195.storedphrase.StoredPhraseApp
+import io.github.tiendat171195.storedphrase.data.VaultRepository
 import io.github.tiendat171195.storedphrase.core.backup.BackupFormat
 import io.github.tiendat171195.storedphrase.core.backup.BackupFormatException
 import io.github.tiendat171195.storedphrase.core.backup.WrongPassphraseException
@@ -21,6 +22,8 @@ import io.github.tiendat171195.storedphrase.core.bip39.Mnemonic
 import io.github.tiendat171195.storedphrase.core.vault.EntryCodec
 import io.github.tiendat171195.storedphrase.core.vault.EntryFormatException
 import io.github.tiendat171195.storedphrase.core.vault.IndexEntry
+import io.github.tiendat171195.storedphrase.core.vault.Layer2Envelope
+import io.github.tiendat171195.storedphrase.core.vault.Layer2WrongPassphraseException
 import io.github.tiendat171195.storedphrase.core.vault.SeedSecret
 import io.github.tiendat171195.storedphrase.core.vault.VaultIndex
 import io.github.tiendat171195.storedphrase.security.AuthException
@@ -97,6 +100,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     var backupExport: BackupExportState? by mutableStateOf(null)
         private set
     var backupImport: BackupImportState? by mutableStateOf(null)
+        private set
+    var layer2Prompt: Layer2Prompt? by mutableStateOf(null)
         private set
     var autoLockSeconds: Int by mutableIntStateOf(container.settings.autoLockSeconds)
         private set
@@ -214,6 +219,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun clearSensitive() {
+        cancelLayer2()
         clearReveal()
         clearDraft()
         clearQuiz()
@@ -228,7 +234,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun reveal(auth: Authenticator, id: String) = launchBusy {
         val entry = entry(id) ?: return@launchBusy
-        val secret = repository.reveal(auth, entry)
+        val secret = obtainSecret(auth, entry, Layer2Action.VIEW) ?: return@launchBusy
+        showReveal(id, secret)
+    }
+
+    private fun showReveal(id: String, secret: SeedSecret) {
         clearReveal()
         reveal = RevealSession(id, secret)
         startRevealTimer()
@@ -262,9 +272,56 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         reveal = null
     }
 
-    /** Uses the words already on screen if any, otherwise decrypts with a new authentication. */
-    private suspend fun decryptedCopy(auth: Authenticator, entry: IndexEntry): SeedSecret =
-        reveal?.takeIf { it.entryId == entry.id }?.secret?.copy() ?: repository.reveal(auth, entry)
+    /**
+     * Words already on screen if any, otherwise decrypted with a new authentication.
+     * Returns null for a layer-2 entry: its passphrase dialog is shown and [action] continues after it.
+     */
+    private suspend fun obtainSecret(auth: Authenticator, entry: IndexEntry, action: Layer2Action): SeedSecret? {
+        reveal?.takeIf { it.entryId == entry.id }?.let { return it.secret.copy() }
+        return when (val result = repository.reveal(auth, entry)) {
+            is VaultRepository.RevealResult.Plain -> result.secret
+            is VaultRepository.RevealResult.Locked -> {
+                cancelLayer2()
+                layer2Prompt = Layer2Prompt(entry.id, result.envelope, action)
+                null
+            }
+        }
+    }
+
+    // endregion
+
+    // region Layer-2 passphrase
+
+    fun submitLayer2() = launchBusy {
+        val prompt = layer2Prompt ?: return@launchBusy
+        val entry = entry(prompt.entryId) ?: return@launchBusy cancelLayer2()
+        val passphrase = prompt.passphrase.copy()
+        val secret = try {
+            repository.openLayer2(entry, prompt.envelope, passphrase)
+        } catch (e: Layer2WrongPassphraseException) {
+            prompt.wrongAttempts += 1
+            if (prompt.wrongAttempts >= Layer2Prompt.MAX_ATTEMPTS) {
+                // Drop the envelope: trying again needs a new Knox Vault authentication.
+                cancelLayer2()
+                message = UiMessage(R.string.layer2_too_many_attempts)
+            }
+            return@launchBusy
+        } finally {
+            passphrase.fill('\u0000')
+        }
+        val action = prompt.action
+        cancelLayer2()
+        when (action) {
+            Layer2Action.VIEW -> showReveal(entry.id, secret)
+            Layer2Action.EDIT -> openEditor(entry, secret)
+            Layer2Action.QUIZ -> openQuiz(entry, secret)
+        }
+    }
+
+    fun cancelLayer2() {
+        layer2Prompt?.wipe()
+        layer2Prompt = null
+    }
 
     // endregion
 
@@ -279,27 +336,34 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun editEntry(auth: Authenticator, id: String) = launchBusy {
         val entry = entry(id) ?: return@launchBusy
-        val secret = decryptedCopy(auth, entry)
+        val secret = obtainSecret(auth, entry, Layer2Action.EDIT) ?: return@launchBusy
+        openEditor(entry, secret)
+    }
+
+    /** Takes ownership of [secret] (wiped here). */
+    private fun openEditor(entry: IndexEntry, secret: SeedSecret) {
         try {
             clearDraft()
-            draft = SeedDraft(editingId = id, label = entry.label, wordCount = secret.wordCount).apply {
+            draft = SeedDraft(editingId = entry.id, label = entry.label, wordCount = secret.wordCount).apply {
                 input.load(secret.wordIndices)
                 passphrase.set(java.nio.CharBuffer.wrap(secret.bip39Passphrase))
                 notes.set(java.nio.CharBuffer.wrap(secret.notes))
                 birthday = secret.birthdayHeight?.toString().orEmpty()
                 showOptional = secret.hasPassphrase || secret.hasNotes || secret.hasBirthday
+                // The layer-2 passphrase is never kept: it must be typed again (same or new) to save.
+                layer2Enabled = entry.layer2
             }
         } finally {
             secret.wipe()
         }
         clearReveal()
-        navigate(Screen.Editor(id))
+        navigate(Screen.Editor(entry.id))
     }
 
     fun saveDraft(auth: Authenticator) = launchBusy {
         val current = draft ?: return@launchBusy
         val currentIndex = index ?: return@launchBusy
-        if (!current.input.isChecksumValid() || !current.birthdayValid) return@launchBusy
+        if (!current.input.isChecksumValid() || !current.birthdayValid || current.layer2Error() != null) return@launchBusy
         // Switching the optional section off means "no passphrase, birthday or notes".
         val optional = current.showOptional
         val secret = SeedSecret(
@@ -308,14 +372,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             notes = if (optional) current.notes.copy() else CharArray(0),
             birthdayHeight = if (optional) current.birthdayHeight else null,
         )
+        val layer2 = if (current.layer2Enabled) current.layer2Passphrase.copy() else null
         try {
             val existing = current.editingId?.let { currentIndex.find(it) }
             val label = current.label.trim().ifEmpty {
                 getApplication<Application>().getString(R.string.default_label, currentIndex.entries.size + 1)
             }
-            index = repository.save(auth, currentIndex, existing, label.take(MAX_LABEL_LENGTH), secret)
+            if (layer2 != null) progress = ProgressInfo(R.string.layer2_sealing)
+            index = repository.save(auth, currentIndex, existing, label.take(MAX_LABEL_LENGTH), secret, layer2)
         } finally {
             secret.wipe()
+            layer2?.fill('\u0000')
+            progress = null
         }
         clearDraft()
         resetTo(Screen.VaultList)
@@ -348,11 +416,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startQuiz(auth: Authenticator, id: String) = launchBusy {
         val entry = entry(id) ?: return@launchBusy
-        val secret = decryptedCopy(auth, entry)
+        val secret = obtainSecret(auth, entry, Layer2Action.QUIZ) ?: return@launchBusy
+        openQuiz(entry, secret)
+    }
+
+    /** Takes ownership of [secret]. */
+    private fun openQuiz(entry: IndexEntry, secret: SeedSecret) {
         clearReveal() // words stay hidden during the quiz
         clearQuiz()
-        quiz = QuizSession(id, secret, randomPositions(secret.wordCount))
-        navigate(Screen.Quiz(id))
+        quiz = QuizSession(entry.id, secret, randomPositions(secret.wordCount))
+        navigate(Screen.Quiz(entry.id))
     }
 
     fun retryQuiz() {
@@ -521,7 +594,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         } catch (e: EntryFormatException) {
             false
         }
-        BackupFormat.Kind.LAYER2 -> false
+        // Still sealed with its own passphrase: only the envelope header can be checked.
+        BackupFormat.Kind.LAYER2 -> try {
+            Layer2Envelope.validate(entry.content)
+            true
+        } catch (e: EntryFormatException) {
+            false
+        }
     }
 
     private fun displayName(uri: Uri): String? = runCatching {

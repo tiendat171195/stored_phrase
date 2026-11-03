@@ -48,6 +48,11 @@ App chặn chụp màn hình, nên hãy **ghi kết quả bằng chữ** (hoặc
 | 21 | Chép file `.spbak` sang máy tính, chạy `python3 tools/recover_backup.py <file>` với passphrase vừa ghi | Script in ra đúng các seed, passphrase BIP39, birthday height và ghi chú |
 | 22 | Cài đặt → Xoá sạch kho → Tạo kho → **Khôi phục từ file backup** → chọn file → nhập passphrase sai | Báo "Sai passphrase…" |
 | 23 | Nhập passphrase đúng → **Nhập vào kho** | Mỗi seed phải xác thực một lần; danh sách hiện lại đủ các seed, xem được và đúng từng từ |
+| 24 | Thêm seed mới, bật **mật khẩu lớp 2** (ví dụ `test-lop-hai-123`), lưu | Danh sách có nhãn "lớp 2" |
+| 25 | Mở seed đó → Hiện các từ | Xác thực vân tay/PIN, rồi hộp thoại hỏi mật khẩu lớp 2; nhập đúng thì seed hiện ra (sau khoảng 1–2 giây) |
+| 26 | Nhập sai mật khẩu lớp 2 năm lần | Báo số lần còn lại; đến lần thứ 5 thì đóng hộp thoại, phải hiện lại (xác thực lại) mới được thử tiếp |
+| 27 | Sửa mục lớp 2 | Muốn lưu phải nhập lại mật khẩu lớp 2 |
+| 28 | Xuất backup có mục lớp 2, rồi chạy `recover_backup.py` | Script hỏi riêng mật khẩu lớp 2 cho mục đó; để trống thì bỏ qua |
 
 ## Gửi lại kết quả
 

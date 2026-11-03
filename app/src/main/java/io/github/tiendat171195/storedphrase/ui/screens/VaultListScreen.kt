@@ -102,7 +102,8 @@ fun VaultListScreen(vm: AppViewModel) {
 private fun EntryRow(entry: IndexEntry, modifier: Modifier = Modifier) {
     val words = pluralStringResource(R.plurals.words_count, entry.wordCount, entry.wordCount)
     val extra = (if (entry.hasPassphrase) " · " + stringResource(R.string.has_passphrase_short) else "") +
-        if (entry.hasBirthday) " · " + stringResource(R.string.has_birthday_short) else ""
+        (if (entry.hasBirthday) " · " + stringResource(R.string.has_birthday_short) else "") +
+        if (entry.layer2) " · " + stringResource(R.string.layer2_short) else ""
     val verifiedAt = entry.verifiedAt
     ListItem(
         headlineContent = { Text(entry.label) },

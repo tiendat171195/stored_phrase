@@ -25,6 +25,10 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 - **Kiểm tra bản giấy.** App hỏi ngẫu nhiên vài vị trí, bạn gõ từ theo bản giấy; app không bao giờ hiện đáp án.
 - **Tự khoá** khi rời app, tắt màn hình hoặc không thao tác (30 giây đến 5 phút, chỉnh được). Có nút **Xoá sạch kho**: huỷ khoá trong chip, toàn bộ bản mã thành rác.
 - **Birthday height**: ô riêng cho ví Zcash (như Zodl), được mã hoá cùng seed.
+- **Mật khẩu lớp 2 (tuỳ chọn cho từng mục)**:
+  - Seed được khoá thêm bằng mật khẩu riêng (Argon2id + AES-256-GCM), rồi mới được Knox Vault mã hoá. Người có máy và biết PIN vẫn không mở được.
+  - Sau 5 lần nhập sai, app bỏ dữ liệu đã giải mã khỏi bộ nhớ; muốn thử tiếp phải xác thực Knox Vault lại.
+  - Trong file backup, mục này vẫn giữ nguyên lớp khoá.
 - **File backup mã hoá (`.spbak`)**:
   - Argon2id + AES-256-GCM, kèm passphrase ngẫu nhiên 7 từ (khoảng 90 bit).
   - Xuất và nhập qua bộ chọn file của Android, không cần mạng.
@@ -38,7 +42,7 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 | M1 | Lõi Knox Vault, màn hình Kiểm tra thiết bị | ✅ |
 | M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ✅ chờ test trên máy thật |
 | M3 | File backup mã hoá + script khôi phục Python + birthday height | ✅ |
-| M4 | Passphrase lớp 2 | — |
+| M4 | Passphrase lớp 2 | ✅ |
 | M5 | Xác minh attestation | — |
 | M6 | Hoàn thiện, phát hành | — |
 

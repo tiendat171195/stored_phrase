@@ -83,7 +83,7 @@ fun EditorScreen(vm: AppViewModel) {
     val input = draft.input
     val complete = input.isComplete()
     val checksumOk = complete && input.isChecksumValid()
-    val canSave = checksumOk && (!draft.showOptional || draft.birthdayValid)
+    val canSave = checksumOk && (!draft.showOptional || draft.birthdayValid) && draft.layer2Error() == null
 
     Scaffold(
         topBar = {
@@ -165,6 +165,7 @@ fun EditorScreen(vm: AppViewModel) {
                 )
                 ChecksumStatus(filled = input.filledCount(), total = input.wordCount, complete = complete, valid = checksumOk)
                 OptionalFields(draft, onFocused = { wordsActive = false })
+                Layer2Fields(draft, onFocused = { wordsActive = false })
                 Button(
                     onClick = { vm.saveDraft(auth) },
                     enabled = canSave && !vm.busy,
@@ -276,4 +277,55 @@ private fun OptionalFields(draft: SeedDraft, onFocused: () -> Unit) {
         },
         onFocused = onFocused,
     )
+}
+
+@Composable
+private fun Layer2Fields(draft: SeedDraft, onFocused: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.layer2_toggle),
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = draft.layer2Enabled,
+            onCheckedChange = {
+                draft.layer2Enabled = it
+                draft.changed()
+            },
+        )
+    }
+    Text(stringResource(R.string.layer2_explain), style = MaterialTheme.typography.bodySmall)
+    if (!draft.layer2Enabled) return
+    if (draft.editingId != null) {
+        Text(stringResource(R.string.layer2_retype_on_edit), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+    }
+    SecureTextField(
+        label = stringResource(R.string.layer2_passphrase_label),
+        initial = draft.layer2Passphrase.chars,
+        masked = true,
+        multiLine = false,
+        maxLength = 256,
+        onChanged = {
+            draft.layer2Passphrase.set(it)
+            draft.changed()
+        },
+        onFocused = onFocused,
+    )
+    SecureTextField(
+        label = stringResource(R.string.layer2_repeat_label),
+        initial = draft.layer2Repeat.chars,
+        masked = true,
+        multiLine = false,
+        maxLength = 256,
+        onChanged = {
+            draft.layer2Repeat.set(it)
+            draft.changed()
+        },
+        onFocused = onFocused,
+    )
+    draft.layer2Error()?.let { error ->
+        Text(stringResource(error), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+    }
+    Text(stringResource(R.string.layer2_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
 }

@@ -19,10 +19,11 @@
 | Autofill, content capture, dịch vụ trợ năng độc hại | Tắt autofill và content capture cho toàn cửa sổ. `accessibilityDataSensitive` (Android 14+) chỉ cho dịch vụ trợ năng thật đọc màn hình. |
 | Sửa hoặc tráo file bản mã | GCM tag + AAD gắn với loại dữ liệu và `blobId`. |
 | Người cầm máy đang mở khoá nhưng không biết PIN | Danh sách cần xác thực trong 60 giây gần nhất; mỗi lần xem seed cần xác thực mới. App tự khoá khi rời app hoặc khi không thao tác. |
+| Người biết cả PIN máy | Mật khẩu lớp 2 (tuỳ chọn cho từng mục). Sai 5 lần thì phải xác thực Knox Vault lại. |
 
 ## Những gì app KHÔNG chống được
 
-- **Người có máy và biết PIN hoặc mật khẩu máy.** Họ xác thực được như bạn. Mốc M4 sẽ thêm *passphrase lớp 2* cho từng mục để chống trường hợp này.
+- **Người có máy và biết PIN hoặc mật khẩu máy.** Họ xác thực được như bạn và mở được các mục thường. Với mục quan trọng, hãy bật **mật khẩu lớp 2**: khi đó họ còn cần mật khẩu riêng của mục. Nếu có thêm quyền root, họ có thể lấy phong bì ra để dò offline, nên mật khẩu lớp 2 cần đủ mạnh (từ 12 ký tự trở lên).
 - **Máy đã bị root hoặc mã độc chiếm quyền hệ điều hành** trong lúc bạn đang xem seed: dữ liệu đã giải mã trên màn hình hay trong RAM có thể bị đọc.
 - **Nhìn trộm, camera.**
 - **Bản debug.** Bản debug ký bằng key công khai (`app/keystores/debug.keystore`), nên ai cũng có thể cài đè một APK giả và đọc dữ liệu của nó. Bản debug chỉ dành cho dữ liệu giả.

@@ -188,6 +188,23 @@
     <string name="error_file_io">Could not read or write the file: %s</string>
     <string name="error_no_file_app">No app is available to pick a file.</string>
 
+    <!-- Layer-2 passphrase (M4) -->
+    <string name="layer2_toggle">Extra protection: layer-2 passphrase</string>
+    <string name="layer2_explain">The words are sealed with a passphrase of your own before Knox Vault encrypts them. Someone who has your phone and knows its PIN still cannot open this entry.</string>
+    <string name="layer2_passphrase_label">Layer-2 passphrase</string>
+    <string name="layer2_repeat_label">Repeat the layer-2 passphrase</string>
+    <string name="layer2_too_short">Use at least 8 characters (12 or more recommended).</string>
+    <string name="layer2_mismatch">The two passphrases differ.</string>
+    <string name="layer2_warning">If you forget this passphrase, nobody can recover the entry, not even from a backup file.</string>
+    <string name="layer2_retype_on_edit">Type the layer-2 passphrase again to save (the same one or a new one).</string>
+    <string name="layer2_short">layer 2</string>
+    <string name="layer2_dialog_title">Layer-2 passphrase</string>
+    <string name="layer2_dialog_text">This entry has extra protection. Enter its own passphrase (not the backup passphrase, not the BIP39 passphrase).</string>
+    <string name="layer2_open">Open</string>
+    <string name="layer2_wrong">Wrong passphrase. Attempts left: %d</string>
+    <string name="layer2_too_many_attempts">Too many wrong passphrases. Show the entry again to retry (it needs your fingerprint or PIN).</string>
+    <string name="layer2_sealing">Sealing with the layer-2 passphrase (Argon2id)…</string>
+
     <!-- Errors -->
     <string name="error_generic">Something went wrong: %s</string>
     <string name="error_auth_lockout">Too many attempts. Try again later or use your screen lock PIN.</string>

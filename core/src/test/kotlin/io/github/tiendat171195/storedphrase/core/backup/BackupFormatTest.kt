@@ -3,6 +3,8 @@ package io.github.tiendat171195.storedphrase.core.backup
 import io.github.tiendat171195.storedphrase.core.bip39.Mnemonic
 import io.github.tiendat171195.storedphrase.core.crypto.Argon2idKdf
 import io.github.tiendat171195.storedphrase.core.vault.EntryCodec
+import io.github.tiendat171195.storedphrase.core.vault.Layer2Envelope
+import io.github.tiendat171195.storedphrase.core.vault.Layer2WrongPassphraseException
 import io.github.tiendat171195.storedphrase.core.vault.SeedSecret
 import java.io.File
 import kotlin.test.Test
@@ -82,12 +84,13 @@ class BackupFormatTest {
     /**
      * tools/testdata/sample-v1.spbak was produced by this code (default Argon2 parameters) and is
      * also decrypted by tools/test_recover_backup.py, keeping the Kotlin and Python sides in sync.
-     * Regenerate with: STORED_PHRASE_WRITE_FIXTURE=1 ./gradlew --no-daemon :core:test --tests '*BackupFormatTest*'
+     * Never regenerate it: it proves files written by older versions still open. (Written once with
+     * STORED_PHRASE_WRITE_FIXTURE=sample-v1.spbak ./gradlew --no-daemon :core:test --tests '*BackupFormatTest*'.)
      */
     @Test
     fun committedFixtureStillDecrypts() {
         val fixture = File("../tools/testdata/sample-v1.spbak")
-        if (System.getenv("STORED_PHRASE_WRITE_FIXTURE") != null) {
+        if (System.getenv("STORED_PHRASE_WRITE_FIXTURE") == fixture.name) {
             fixture.parentFile.mkdirs()
             fixture.writeBytes(BackupFormat.encrypt(sampleBackup(), FIXTURE_PASSPHRASE.toCharArray()))
         }
@@ -97,7 +100,41 @@ class BackupFormatTest {
         assertContentEquals(bytes.copyOfRange(0, 4), "SPBK".encodeToByteArray())
     }
 
+    /** Same idea for tools/testdata/sample-v1-layer2.spbak: one plain and one layer-2 entry. */
+    @Test
+    fun committedLayer2FixtureStillDecrypts() {
+        val fixture = File("../tools/testdata/sample-v1-layer2.spbak")
+        if (System.getenv("STORED_PHRASE_WRITE_FIXTURE") == fixture.name) {
+            val seed = requireNotNull(Mnemonic.parse(List(23) { "abandon" }.joinToString(" ") + " art"))
+            val inner = EntryCodec.encode(SeedSecret(seed, notes = "cold storage".toCharArray(), birthdayHeight = 3_000_000))
+            val envelope = Layer2Envelope.seal(inner, LAYER2_PASSPHRASE.toCharArray())
+            val plain = sampleBackup().entries.first()
+            val backup = BackupFormat.Backup(
+                BackupFormat.Manifest(createdAt = 1_762_000_000_000, generator = "Stored Phrase test"),
+                listOf(
+                    plain,
+                    BackupFormat.Entry(
+                        BackupFormat.Kind.LAYER2,
+                        BackupFormat.EntryMeta("Layer 2 test", 24, hasNotes = true, hasBirthday = true, createdAt = 6, updatedAt = 7),
+                        envelope,
+                    ),
+                ),
+            )
+            fixture.writeBytes(BackupFormat.encrypt(backup, FIXTURE_PASSPHRASE.toCharArray()))
+        }
+        val backup = BackupFormat.decrypt(fixture.readBytes(), FIXTURE_PASSPHRASE.toCharArray())
+        assertEquals(listOf(BackupFormat.Kind.PLAIN, BackupFormat.Kind.LAYER2), backup.entries.map { it.kind })
+        val envelope = backup.entries[1].content
+        Layer2Envelope.validate(envelope)
+        assertFailsWith<Layer2WrongPassphraseException> { Layer2Envelope.open(envelope, "not the passphrase".toCharArray()) }
+        val secret = EntryCodec.decode(Layer2Envelope.open(envelope, LAYER2_PASSPHRASE.toCharArray()))
+        assertEquals(24, secret.wordCount)
+        assertEquals("cold storage", String(secret.notes))
+        assertEquals(3_000_000L, secret.birthdayHeight)
+    }
+
     private companion object {
         const val FIXTURE_PASSPHRASE = "correct-horse-battery-staple"
+        const val LAYER2_PASSPHRASE = "layer-two-secret"
     }
 }

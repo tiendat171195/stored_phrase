@@ -136,7 +136,8 @@ private fun EntryInfo(entry: IndexEntry) {
         Text(
             text = pluralStringResource(R.plurals.words_count, entry.wordCount, entry.wordCount) +
                 (if (entry.hasPassphrase) " · " + stringResource(R.string.has_passphrase_short) else "") +
-                if (entry.hasBirthday) " · " + stringResource(R.string.has_birthday_short) else "",
+                (if (entry.hasBirthday) " · " + stringResource(R.string.has_birthday_short) else "") +
+                if (entry.layer2) " · " + stringResource(R.string.layer2_short) else "",
             style = MaterialTheme.typography.titleSmall,
         )
         Text(

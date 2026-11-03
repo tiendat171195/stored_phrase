@@ -186,6 +186,23 @@
     <string name="error_file_io">Không đọc/ghi được file: %s</string>
     <string name="error_no_file_app">Không có ứng dụng nào để chọn file.</string>
 
+    <!-- Layer-2 passphrase (M4) -->
+    <string name="layer2_toggle">Bảo vệ thêm: mật khẩu lớp 2</string>
+    <string name="layer2_explain">Các từ được khoá bằng mật khẩu riêng của bạn trước khi Knox Vault mã hoá. Người có máy và biết PIN máy vẫn không mở được mục này.</string>
+    <string name="layer2_passphrase_label">Mật khẩu lớp 2</string>
+    <string name="layer2_repeat_label">Nhập lại mật khẩu lớp 2</string>
+    <string name="layer2_too_short">Dùng ít nhất 8 ký tự (nên từ 12 ký tự trở lên).</string>
+    <string name="layer2_mismatch">Hai mật khẩu không khớp.</string>
+    <string name="layer2_warning">Nếu quên mật khẩu này, không ai khôi phục được mục này, kể cả từ file backup.</string>
+    <string name="layer2_retype_on_edit">Nhập lại mật khẩu lớp 2 để lưu (giữ như cũ hoặc đổi mới).</string>
+    <string name="layer2_short">lớp 2</string>
+    <string name="layer2_dialog_title">Mật khẩu lớp 2</string>
+    <string name="layer2_dialog_text">Mục này có bảo vệ thêm. Nhập mật khẩu riêng của nó (không phải passphrase file backup, cũng không phải passphrase BIP39).</string>
+    <string name="layer2_open">Mở</string>
+    <string name="layer2_wrong">Sai mật khẩu. Còn %d lần thử</string>
+    <string name="layer2_too_many_attempts">Sai mật khẩu quá nhiều lần. Bấm hiện mục này lại để thử tiếp (cần vân tay hoặc PIN).</string>
+    <string name="layer2_sealing">Đang khoá bằng mật khẩu lớp 2 (Argon2id)…</string>
+
     <!-- Errors -->
     <string name="error_generic">Có lỗi xảy ra: %s</string>
     <string name="error_auth_lockout">Thử sai quá nhiều lần. Hãy thử lại sau hoặc dùng PIN khoá màn hình.</string>

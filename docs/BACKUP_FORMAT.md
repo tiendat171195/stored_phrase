@@ -66,11 +66,11 @@ u8          1 nếu có birthday height, ngược lại 0          (version 2)
 u32 BE      birthday height                                 (version 2, nếu có)
 ```
 
-Với **loại 2**, nội dung là phong bì mật khẩu lớp 2, được mô tả ở mốc M4. Nội dung này vẫn đang được mã hoá bằng mật khẩu riêng của mục đó.
+Với **loại 2**, nội dung là **phong bì mật khẩu lớp 2**. Phong bì có cùng header 45 byte như trên, nhưng magic là `SPL2`. Bên trong là bản rõ EntryCodec, được mã hoá bằng `Argon2id(mật khẩu lớp 2)` + AES-256-GCM, với AAD là header của chính phong bì. File backup chứa phong bì nguyên vẹn, nên khi khôi phục (bằng app hoặc script) vẫn cần mật khẩu lớp 2 của từng mục. Script sẽ hỏi riêng cho từng mục; để trống thì mục đó được bỏ qua.
 
 ## Kiểm thử chéo
 
-`tools/testdata/sample-v1.spbak` do code Kotlin (`BackupFormat`) tạo ra, với passphrase `correct-horse-battery-staple`. CI giải mã file này bằng cả hai bên:
+`tools/testdata/sample-v1.spbak` do code Kotlin (`BackupFormat`) tạo ra, với passphrase `correct-horse-battery-staple`. File này không bao giờ được tạo lại, để chứng minh các bản app mới vẫn mở được file do bản cũ tạo. `tools/testdata/sample-v1-layer2.spbak` có thêm một mục lớp 2, với mật khẩu lớp 2 là `layer-two-secret`. CI giải mã các file này bằng cả hai bên:
 
 - Kotlin: `BackupFormatTest.committedFixtureStillDecrypts`.
 - Python: `tools/test_recover_backup.py`.

@@ -41,6 +41,8 @@ data class IndexEntry(
     val hasPassphrase: Boolean = false,
     val hasNotes: Boolean = false,
     val hasBirthday: Boolean = false,
+    /** Content is a layer-2 envelope that needs the entry's own passphrase. */
+    val layer2: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,
     /** Last successful paper-copy check, or null. */

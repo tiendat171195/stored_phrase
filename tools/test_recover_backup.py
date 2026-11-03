@@ -11,7 +11,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 import recover_backup  # noqa: E402
 
 FIXTURE = Path(__file__).parent / "testdata" / "sample-v1.spbak"
+LAYER2_FIXTURE = Path(__file__).parent / "testdata" / "sample-v1-layer2.spbak"
 PASSPHRASE = "correct-horse-battery-staple"
+LAYER2_PASSPHRASE = "layer-two-secret"
 
 
 class RecoverBackupTest(unittest.TestCase):
@@ -55,6 +57,20 @@ class RecoverBackupTest(unittest.TestCase):
         tampered[6] = 0x7F  # ~2 TiB of Argon2 memory
         with self.assertRaises(recover_backup.BackupError):
             recover_backup.parse_header(bytes(tampered))
+
+    def test_layer2_entry_needs_its_own_passphrase(self):
+        data = LAYER2_FIXTURE.read_bytes()
+        skipped = recover_backup.recover(data, PASSPHRASE, self.words)
+        self.assertTrue(skipped["entries"][1]["locked"])
+        with self.assertRaises(recover_backup.BackupError):
+            recover_backup.recover(data, PASSPHRASE, self.words, lambda meta: "not the passphrase")
+        opened = recover_backup.recover(data, PASSPHRASE, self.words, lambda meta: LAYER2_PASSPHRASE)
+        entry = opened["entries"][1]
+        self.assertEqual("Layer 2 test", entry["meta"]["label"])
+        self.assertEqual(["abandon"] * 23 + ["art"], entry["words"])
+        self.assertEqual("cold storage", entry["notes"])
+        self.assertEqual(3000000, entry["birthdayHeight"])
+        self.assertTrue(entry["checksumValid"])
 
     def test_bip39_checksum(self):
         abandon = self.words.index("abandon")
