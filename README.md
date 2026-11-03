@@ -2,7 +2,7 @@
 
 App Android lưu **cụm từ khôi phục ví crypto (seed phrase BIP39, 12–24 từ)**, bảo vệ bằng chip bảo mật **Samsung Knox Vault**.
 
-> ⚠️ Dự án đang được xây dựng. Chưa dùng để lưu seed thật cho tới khi bạn tự kiểm tra trên máy của mình và có bản sao lưu khác (bản giấy).
+> ⚠️ Phiên bản 0.9.0 (release candidate) đã đủ tính năng nhưng **chưa được kiểm thử trên máy Samsung thật**. Hãy chạy hết [checklist thiết bị](docs/DEVICE_TESTING.md) bằng dữ liệu giả trước. Khi lưu seed thật, dùng bản release ký bằng key riêng ([docs/RELEASE.md](docs/RELEASE.md)) và luôn giữ thêm bản giấy.
 
 ## Ý tưởng chính
 
@@ -44,11 +44,11 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 |---|---|---|
 | M0 | Khung dự án, hardening manifest, CI | ✅ |
 | M1 | Lõi Knox Vault, màn hình Kiểm tra thiết bị | ✅ |
-| M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ✅ chờ test trên máy thật |
+| M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ✅ |
 | M3 | File backup mã hoá + script khôi phục Python + birthday height | ✅ |
 | M4 | Passphrase lớp 2 | ✅ |
 | M5 | Xác minh attestation | ✅ |
-| M6 | Hoàn thiện, phát hành | — |
+| M6 | Hoàn thiện, hướng dẫn phát hành | ✅ |
 
 ## Yêu cầu thiết bị
 
@@ -72,7 +72,7 @@ Bản debug ký bằng `app/keystores/debug.keystore`. Key này được commit 
 
 ### Bản release
 
-Tạo keystore riêng (không bao giờ commit), rồi tạo file `keystore.properties` ở thư mục gốc (đã nằm trong `.gitignore`):
+Hướng dẫn đầy đủ (tạo key, build, kiểm tra chữ ký, cập nhật): [docs/RELEASE.md](docs/RELEASE.md). Tóm tắt: tạo keystore riêng (không bao giờ commit), rồi tạo file `keystore.properties` ở thư mục gốc (đã nằm trong `.gitignore`):
 
 ```properties
 storeFile=/đường/dẫn/tới/release.jks
@@ -100,7 +100,8 @@ Luôn giữ bản giấy và tạo **file backup mã hoá** (Cài đặt → Sao
 ```
 core/   Kotlin/JVM thuần: BIP39, định dạng file, codec (test nhanh trên JVM)
 app/    Android: Keystore/StrongBox, BiometricPrompt, giao diện Compose
-docs/   Kiến trúc, bảo mật, checklist test trên thiết bị
+tools/  recover_backup.py: giải mã file backup trên máy tính, không cần app
+docs/   Kiến trúc, bảo mật, định dạng backup, phát hành, checklist test trên thiết bị
 ```
 
 ## Nguồn dữ liệu và giấy phép

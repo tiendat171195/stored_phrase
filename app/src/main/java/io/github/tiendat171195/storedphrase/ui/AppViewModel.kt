@@ -372,9 +372,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun saveDraft(auth: Authenticator) = launchBusy {
         val current = draft ?: return@launchBusy
         val currentIndex = index ?: return@launchBusy
-        if (!current.input.isChecksumValid() || !current.birthdayValid || current.layer2Error() != null) return@launchBusy
         // Switching the optional section off means "no passphrase, birthday or notes".
         val optional = current.showOptional
+        if (!current.input.isChecksumValid() || (optional && !current.birthdayValid) || current.layer2Error() != null) {
+            return@launchBusy
+        }
         val secret = SeedSecret(
             wordIndices = current.input.indices(),
             bip39Passphrase = if (optional) current.passphrase.copy() else CharArray(0),

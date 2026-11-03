@@ -41,19 +41,28 @@ class SecureChars {
     var length by mutableIntStateOf(0)
         private set
 
+    /** Bumped on every change, so comparisons in composables re-run even when the length is unchanged. */
+    var revision by mutableIntStateOf(0)
+        private set
+
     fun set(source: CharSequence) {
         val next = CharArray(source.length) { source[it] }
         chars.fill('\u0000')
         chars = next
         length = next.size
+        revision++
     }
 
     fun copy(): CharArray = chars.copyOf()
+
+    /** Content comparison that is tracked by Compose (reads both revisions). */
+    fun sameAs(other: SecureChars): Boolean = (revision or other.revision) >= 0 && chars.contentEquals(other.chars)
 
     fun wipe() {
         chars.fill('\u0000')
         chars = CharArray(0)
         length = 0
+        revision++
     }
 }
 
@@ -77,7 +86,7 @@ class SeedDraft(val editingId: String?, label: String, wordCount: Int) {
     fun layer2Error(): Int? = when {
         !layer2Enabled -> null
         layer2Passphrase.length < Layer2Envelope.MIN_PASSPHRASE_LENGTH -> R.string.layer2_too_short
-        !layer2Passphrase.chars.contentEquals(layer2Repeat.chars) -> R.string.layer2_mismatch
+        !layer2Passphrase.sameAs(layer2Repeat) -> R.string.layer2_mismatch
         else -> null
     }
 
@@ -200,7 +209,7 @@ class BackupExportState {
     fun validationError(): Int? = when {
         useGenerated -> null
         custom.length < MIN_CUSTOM_LENGTH -> R.string.backup_passphrase_too_short
-        !custom.chars.contentEquals(customRepeat.chars) -> R.string.backup_passphrase_mismatch
+        !custom.sameAs(customRepeat) -> R.string.backup_passphrase_mismatch
         else -> null
     }
 
