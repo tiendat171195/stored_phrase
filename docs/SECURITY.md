@@ -26,7 +26,8 @@
 - **Máy đã bị root hoặc mã độc chiếm quyền hệ điều hành** trong lúc bạn đang xem seed: dữ liệu đã giải mã trên màn hình hay trong RAM có thể bị đọc.
 - **Nhìn trộm, camera.**
 - **Bản debug.** Bản debug ký bằng key công khai (`app/keystores/debug.keystore`), nên ai cũng có thể cài đè một APK giả và đọc dữ liệu của nó. Bản debug chỉ dành cho dữ liệu giả.
-- **Mất dữ liệu.** Mất máy, gỡ app, reset máy hoặc tắt khoá màn hình đều làm khoá Knox Vault mất vĩnh viễn. Hãy giữ bản giấy; file backup mã hoá sẽ có từ M3.
+- **Mất dữ liệu.** Mất máy, gỡ app, reset máy hoặc tắt khoá màn hình đều làm khoá Knox Vault mất vĩnh viễn. Hãy giữ bản giấy và tạo file backup mã hoá.
+- **File backup không được Knox Vault bảo vệ.** Ai có file đều có thể dò passphrase offline. Mỗi lần thử tốn khoảng 64 MiB bộ nhớ và nhiều vòng Argon2id, nên dò rất chậm, nhưng một passphrase yếu vẫn có thể bị dò ra. Hãy dùng passphrase ngẫu nhiên 7 từ (khoảng 90 bit) và cất file tách khỏi passphrase.
 - **Dọn bộ nhớ không triệt để.** JVM, Compose và `String` có thể để lại bản sao trong RAM. App giảm thiểu bằng cách lưu chỉ số từ và ghi đè mảng ngay sau khi dùng, nhưng không thể đảm bảo tuyệt đối.
 
 ## Giới hạn đã biết

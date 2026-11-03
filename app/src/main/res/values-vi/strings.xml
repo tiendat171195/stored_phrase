@@ -100,7 +100,7 @@
     <string name="checksum_incomplete">Đã nhập %1$d/%2$d từ</string>
     <string name="checksum_ok">✓ Checksum BIP39 hợp lệ</string>
     <string name="checksum_bad">✗ Sai checksum: có ít nhất một từ bị sai</string>
-    <string name="optional_section">Passphrase BIP39 và ghi chú</string>
+    <string name="optional_section">Passphrase, birthday height và ghi chú</string>
     <string name="passphrase_hint">chỉ nhập nếu ví của bạn có dùng</string>
     <string name="show_text">Hiện passphrase</string>
     <string name="hide_text">Ẩn passphrase</string>
@@ -136,6 +136,55 @@
     <string name="about_title">Thông tin</string>
     <string name="about_version">Phiên bản %s</string>
     <string name="no_network_note">App này không có quyền truy cập internet. Không có gì rời khỏi máy của bạn.</string>
+
+    <!-- Backup (M3) -->
+    <string name="auth_backup_title">Sao lưu seed phrase</string>
+    <string name="auth_backup_subtitle">Giải mã bên trong chip bảo mật để đưa vào file backup</string>
+    <string name="auth_import_title">Nhập seed phrase</string>
+    <string name="auth_import_subtitle">Mã hoá bên trong chip bảo mật của máy này</string>
+    <string name="birthday_label">Birthday height (ví Zcash như Zodl)</string>
+    <string name="birthday_hint">Số block hiện cùng cụm từ khôi phục. Để trống nếu ví của bạn không có.</string>
+    <string name="birthday_invalid">Chỉ nhập số, tối đa 4294967295</string>
+    <string name="birthday_value">Birthday height: %s</string>
+    <string name="has_birthday_short">birthday</string>
+    <string name="restore_from_backup">Khôi phục từ file backup</string>
+    <string name="backup_section_title">Sao lưu</string>
+    <string name="backup_section_desc">Khoá của kho không bao giờ rời khỏi máy này. File backup mã hoá là cách duy nhất để chuyển seed phrase sang máy mới.</string>
+    <string name="backup_export_title">Sao lưu ra file</string>
+    <string name="backup_export_intro">Tạo một file mã hoá chứa mọi seed phrase trong kho (%d). File chỉ được bảo vệ bằng passphrase bên dưới, không phải bằng Knox Vault.</string>
+    <string name="backup_storage_advice">Cất file ở nơi offline (USB, thẻ nhớ, máy tính) và ghi passphrase ra giấy, để ở chỗ khác. Tránh lưu lên cloud, trừ khi bạn dùng passphrase ngẫu nhiên.</string>
+    <string name="backup_passphrase_generated">Ngẫu nhiên (khuyến nghị)</string>
+    <string name="backup_passphrase_custom">Tự đặt</string>
+    <string name="backup_generated_hint">Số từ ngẫu nhiên: %1$d · độ mạnh khoảng 2^%2$d. Hãy chép lại chính xác, đúng thứ tự.</string>
+    <string name="backup_regenerate">Tạo passphrase khác</string>
+    <string name="backup_passphrase_label">Passphrase của file backup</string>
+    <string name="backup_passphrase_repeat">Nhập lại passphrase</string>
+    <string name="backup_passphrase_too_short">Dùng ít nhất 12 ký tự (càng dài càng tốt).</string>
+    <string name="backup_passphrase_mismatch">Hai passphrase không khớp.</string>
+    <string name="backup_confirm_written">Tôi đã ghi passphrase ra giấy và sẽ cất riêng, không để cùng chỗ với file backup.</string>
+    <string name="backup_auth_note">Bạn sẽ xác thực một lần cho mỗi seed phrase, vì mỗi seed được giải mã riêng bên trong chip.</string>
+    <string name="backup_export_button">Chọn nơi lưu và xuất file</string>
+    <string name="backup_export_done">Đã lưu file backup. Số seed phrase trong file: %d.</string>
+    <string name="backup_export_next_steps">Hãy thử khôi phục: trên máy tính, chạy tools/recover_backup.py trong repo với passphrase của bạn. Sau đó cất file và passphrase ở hai nơi khác nhau.</string>
+    <string name="backup_progress_decrypt">Đã giải mã %1$d/%2$d</string>
+    <string name="backup_progress_encrypt">Đang mã hoá file backup (Argon2id)…</string>
+    <string name="backup_progress_unlock">Đang kiểm tra passphrase (Argon2id)…</string>
+    <string name="backup_progress_import">Đã nhập %1$d/%2$d</string>
+    <string name="backup_import_title">Khôi phục từ file</string>
+    <string name="backup_import_intro">Chọn file backup .spbak do Stored Phrase tạo. Các seed phrase trong file sẽ được mã hoá lại bằng khoá Knox Vault của máy này và thêm vào kho.</string>
+    <string name="backup_pick_file">Chọn file backup</string>
+    <string name="backup_pick_other">Chọn file khác</string>
+    <string name="backup_file_selected">File: %s</string>
+    <string name="backup_decrypt_button">Giải mã</string>
+    <string name="backup_preview_title">Có trong file backup</string>
+    <string name="backup_skipped">Bỏ qua vì hỏng hoặc không hợp lệ: %d</string>
+    <string name="backup_import_auth_note">Bạn sẽ xác thực một lần cho mỗi seed phrase khi nó được mã hoá bên trong chip.</string>
+    <string name="backup_import_button">Nhập vào kho (%d)</string>
+    <string name="backup_import_done">Đã nhập xong. Số seed phrase được thêm: %d.</string>
+    <string name="error_wrong_backup_passphrase">Sai passphrase, hoặc file backup đã bị thay đổi.</string>
+    <string name="error_bad_backup_file">Đây không phải file backup của Stored Phrase, hoặc file đã bị hỏng.</string>
+    <string name="error_file_io">Không đọc/ghi được file: %s</string>
+    <string name="error_no_file_app">Không có ứng dụng nào để chọn file.</string>
 
     <!-- Errors -->
     <string name="error_generic">Có lỗi xảy ra: %s</string>

@@ -43,6 +43,11 @@ App chặn chụp màn hình, nên hãy **ghi kết quả bằng chữ** (hoặc
 | 16 | Cài đặt → **Xoá sạch kho** → gõ `XOA` | Quay về màn hình Kiểm tra thiết bị, danh sách cũ không còn |
 | 17 | *(Chỉ với dữ liệu giả)* Tắt khoá màn hình, rồi mở app | Màn hình "Khoá của kho đã bị huỷ"; bấm "Xoá và tạo kho mới" thì hoạt động (sau khi đặt lại khoá màn hình) |
 | 18 | *(Tuỳ chọn, cần ADB)* Chạy `./gradlew connectedDebugAndroidTest` | 3 test pass |
+| 19 | Sửa seed 24 từ: bật mục tuỳ chọn, nhập birthday height (ví dụ `2726400`), lưu, rồi hiện seed | Dòng "Birthday height: 2726400" hiện ra; danh sách có thêm nhãn "birthday" |
+| 20 | Cài đặt → **Sao lưu ra file**: giữ passphrase ngẫu nhiên, tích ô xác nhận, chọn nơi lưu (ví dụ thư mục Download) | Mỗi seed phải xác thực một lần, rồi báo "Đã lưu file backup" |
+| 21 | Chép file `.spbak` sang máy tính, chạy `python3 tools/recover_backup.py <file>` với passphrase vừa ghi | Script in ra đúng các seed, passphrase BIP39, birthday height và ghi chú |
+| 22 | Cài đặt → Xoá sạch kho → Tạo kho → **Khôi phục từ file backup** → chọn file → nhập passphrase sai | Báo "Sai passphrase…" |
+| 23 | Nhập passphrase đúng → **Nhập vào kho** | Mỗi seed phải xác thực một lần; danh sách hiện lại đủ các seed, xem được và đúng từng từ |
 
 ## Gửi lại kết quả
 

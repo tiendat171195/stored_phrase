@@ -94,6 +94,18 @@ fun SettingsScreen(vm: AppViewModel) {
                 }
                 HorizontalDivider()
 
+                Text(stringResource(R.string.backup_section_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.backup_section_desc), style = MaterialTheme.typography.bodyMedium)
+                OutlinedButton(
+                    onClick = { vm.openBackupExport() },
+                    enabled = !vm.index?.entries.isNullOrEmpty(),
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.backup_export_title)) }
+                OutlinedButton(onClick = { vm.openBackupImport() }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.backup_import_title))
+                }
+                HorizontalDivider()
+
                 Text(stringResource(R.string.wipe_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.wipe_desc), style = MaterialTheme.typography.bodyMedium)
                 OutlinedButton(onClick = { confirmWipe = true }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth()) {

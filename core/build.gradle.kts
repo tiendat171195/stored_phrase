@@ -18,6 +18,8 @@ kotlin {
 
 dependencies {
     api(libs.kotlinx.serialization.json)
+    // Lightweight API only: Argon2id (backups, layer-2 passphrase) and ASN.1 (key attestation).
+    implementation(libs.bouncycastle.prov)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit)

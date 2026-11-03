@@ -40,6 +40,7 @@ data class IndexEntry(
     val wordCount: Int,
     val hasPassphrase: Boolean = false,
     val hasNotes: Boolean = false,
+    val hasBirthday: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,
     /** Last successful paper-copy check, or null. */

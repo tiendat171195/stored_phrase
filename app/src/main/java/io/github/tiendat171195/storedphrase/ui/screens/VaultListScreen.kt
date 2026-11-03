@@ -22,6 +22,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -76,11 +77,14 @@ fun VaultListScreen(vm: AppViewModel) {
                         .padding(32.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = stringResource(R.string.empty_vault),
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = stringResource(R.string.empty_vault),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        TextButton(onClick = { vm.openBackupImport() }) { Text(stringResource(R.string.restore_from_backup)) }
+                    }
                 }
             } else {
                 LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
@@ -97,7 +101,8 @@ fun VaultListScreen(vm: AppViewModel) {
 @Composable
 private fun EntryRow(entry: IndexEntry, modifier: Modifier = Modifier) {
     val words = pluralStringResource(R.plurals.words_count, entry.wordCount, entry.wordCount)
-    val extra = if (entry.hasPassphrase) " · " + stringResource(R.string.has_passphrase_short) else ""
+    val extra = (if (entry.hasPassphrase) " · " + stringResource(R.string.has_passphrase_short) else "") +
+        if (entry.hasBirthday) " · " + stringResource(R.string.has_birthday_short) else ""
     val verifiedAt = entry.verifiedAt
     ListItem(
         headlineContent = { Text(entry.label) },

@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import io.github.tiendat171195.storedphrase.R
+import io.github.tiendat171195.storedphrase.ui.screens.BackupExportScreen
+import io.github.tiendat171195.storedphrase.ui.screens.BackupImportScreen
 import io.github.tiendat171195.storedphrase.ui.screens.DeviceCheckScreen
 import io.github.tiendat171195.storedphrase.ui.screens.EditorScreen
 import io.github.tiendat171195.storedphrase.ui.screens.EntryDetailScreen
@@ -34,6 +36,8 @@ fun StoredPhraseRoot(vm: AppViewModel) {
             Screen.VaultList -> VaultListScreen(vm)
             Screen.KeyInvalidated -> KeyInvalidatedScreen(vm)
             Screen.Settings -> SettingsScreen(vm)
+            Screen.BackupExport -> BackupExportScreen(vm)
+            Screen.BackupImport -> BackupImportScreen(vm)
             is Screen.EntryDetail -> EntryDetailScreen(vm, screen.id)
             is Screen.Editor -> EditorScreen(vm)
             is Screen.Quiz -> QuizScreen(vm)

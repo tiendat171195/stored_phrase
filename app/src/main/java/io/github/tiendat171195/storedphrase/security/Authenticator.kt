@@ -19,16 +19,23 @@ enum class AuthReason(@StringRes val title: Int, @StringRes val subtitle: Int) {
     REVEAL(R.string.auth_reveal_title, R.string.auth_reveal_subtitle),
     SAVE(R.string.auth_save_title, R.string.auth_save_subtitle),
     UPDATE(R.string.auth_update_title, R.string.auth_update_subtitle),
+    BACKUP(R.string.auth_backup_title, R.string.auth_backup_subtitle),
+    IMPORT(R.string.auth_import_title, R.string.auth_import_subtitle),
 }
 
 /** Asks the user to authenticate with a strong fingerprint or the device screen lock. */
 fun interface Authenticator {
     /**
      * @param cryptoObject operation to authorise (per-use keys). Null for time-bound keys.
+     * @param detail optional extra line, e.g. which entry of a backup is being processed.
      * @return the authorised CryptoObject, or null when none was passed.
      * @throws AuthException when the prompt is cancelled or fails.
      */
-    suspend fun authenticate(reason: AuthReason, cryptoObject: BiometricPrompt.CryptoObject?): BiometricPrompt.CryptoObject?
+    suspend fun authenticate(
+        reason: AuthReason,
+        cryptoObject: BiometricPrompt.CryptoObject?,
+        detail: String?,
+    ): BiometricPrompt.CryptoObject?
 }
 
 class AuthException(val code: Int, message: String) : Exception(message) {
@@ -50,6 +57,7 @@ class PromptAuthenticator(
     override suspend fun authenticate(
         reason: AuthReason,
         cryptoObject: BiometricPrompt.CryptoObject?,
+        detail: String?,
     ): BiometricPrompt.CryptoObject? = withContext(Dispatchers.Main) {
         // The prompt (or the credential screen) may briefly stop our activity; don't auto-lock for it.
         session.beginExternalFlow()
@@ -71,6 +79,7 @@ class PromptAuthenticator(
                 val info = BiometricPrompt.PromptInfo.Builder()
                     .setTitle(activity.getString(reason.title))
                     .setSubtitle(activity.getString(reason.subtitle))
+                    .setDescription(detail)
                     .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
                     .setConfirmationRequired(false)
                     .build()

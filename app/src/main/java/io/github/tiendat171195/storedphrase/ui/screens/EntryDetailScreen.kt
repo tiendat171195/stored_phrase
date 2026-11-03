@@ -135,7 +135,8 @@ private fun EntryInfo(entry: IndexEntry) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
             text = pluralStringResource(R.plurals.words_count, entry.wordCount, entry.wordCount) +
-                if (entry.hasPassphrase) " · " + stringResource(R.string.has_passphrase_short) else "",
+                (if (entry.hasPassphrase) " · " + stringResource(R.string.has_passphrase_short) else "") +
+                if (entry.hasBirthday) " · " + stringResource(R.string.has_birthday_short) else "",
             style = MaterialTheme.typography.titleSmall,
         )
         Text(
@@ -183,6 +184,13 @@ private fun RevealedContent(vm: AppViewModel, reveal: RevealSession) {
         },
         modifier = Modifier.fillMaxWidth(),
     )
+    secret.birthdayHeight?.let { height ->
+        Text(
+            text = stringResource(R.string.birthday_value, height.toString()),
+            style = MaterialTheme.typography.bodyLarge,
+            fontFamily = FontFamily.Monospace,
+        )
+    }
     if (secret.hasPassphrase) {
         SecretLine(
             title = stringResource(R.string.bip39_passphrase_label),

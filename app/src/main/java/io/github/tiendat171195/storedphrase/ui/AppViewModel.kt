@@ -2,6 +2,8 @@ package io.github.tiendat171195.storedphrase.ui
 
 import android.app.Application
 import android.app.KeyguardManager
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -9,8 +11,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.tiendat171195.storedphrase.BuildConfig
 import io.github.tiendat171195.storedphrase.R
 import io.github.tiendat171195.storedphrase.StoredPhraseApp
+import io.github.tiendat171195.storedphrase.core.backup.BackupFormat
+import io.github.tiendat171195.storedphrase.core.backup.BackupFormatException
+import io.github.tiendat171195.storedphrase.core.backup.WrongPassphraseException
+import io.github.tiendat171195.storedphrase.core.bip39.Mnemonic
+import io.github.tiendat171195.storedphrase.core.vault.EntryCodec
+import io.github.tiendat171195.storedphrase.core.vault.EntryFormatException
 import io.github.tiendat171195.storedphrase.core.vault.IndexEntry
 import io.github.tiendat171195.storedphrase.core.vault.SeedSecret
 import io.github.tiendat171195.storedphrase.core.vault.VaultIndex
@@ -29,7 +38,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.security.SecureRandom
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 sealed interface Screen {
     data object DeviceCheck : Screen
@@ -37,6 +50,8 @@ sealed interface Screen {
     data object VaultList : Screen
     data object KeyInvalidated : Screen
     data object Settings : Screen
+    data object BackupExport : Screen
+    data object BackupImport : Screen
     data class EntryDetail(val id: String) : Screen
     data class Editor(val id: String?) : Screen
     data class Quiz(val id: String) : Screen
@@ -69,6 +84,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         private set
     var busy: Boolean by mutableStateOf(false)
         private set
+    var progress: ProgressInfo? by mutableStateOf(null)
+        private set
     var message: UiMessage? by mutableStateOf(null)
         private set
     var reveal: RevealSession? by mutableStateOf(null)
@@ -76,6 +93,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     var draft: SeedDraft? by mutableStateOf(null)
         private set
     var quiz: QuizSession? by mutableStateOf(null)
+        private set
+    var backupExport: BackupExportState? by mutableStateOf(null)
+        private set
+    var backupImport: BackupImportState? by mutableStateOf(null)
         private set
     var autoLockSeconds: Int by mutableIntStateOf(container.settings.autoLockSeconds)
         private set
@@ -111,6 +132,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             is Screen.Editor -> clearDraft()
             is Screen.EntryDetail -> clearReveal()
             is Screen.Quiz -> clearQuiz()
+            Screen.BackupExport -> clearBackupExport()
+            Screen.BackupImport -> clearBackupImport()
             else -> Unit
         }
         backStack = backStack.dropLast(1)
@@ -132,6 +155,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         deviceReport = null
         navigate(Screen.DeviceCheck)
     }
+
+    /** Pickers and system prompts temporarily cover the app; they must not trigger auto-lock. */
+    fun beginExternalFlow() = session.beginExternalFlow()
+
+    fun endExternalFlow() = session.endExternalFlow()
 
     // endregion
 
@@ -169,24 +197,29 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Wipes every decrypted object and returns to the lock screen. */
     private fun lockNow() {
-        clearReveal()
-        clearDraft()
-        clearQuiz()
+        clearSensitive()
         index = null
         session.onLocked()
         resetTo(if (repository.vaultExists()) Screen.Locked else Screen.DeviceCheck)
     }
 
     fun wipeAndStartOver() = launchBusy {
-        clearReveal()
-        clearDraft()
-        clearQuiz()
+        clearSensitive()
         repository.wipe()
         index = null
         keyReport = null
         session.onLocked()
         deviceReport = null
         resetTo(Screen.DeviceCheck)
+    }
+
+    private fun clearSensitive() {
+        clearReveal()
+        clearDraft()
+        clearQuiz()
+        clearBackupExport()
+        clearBackupImport()
+        progress = null
     }
 
     // endregion
@@ -253,7 +286,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 input.load(secret.wordIndices)
                 passphrase.set(java.nio.CharBuffer.wrap(secret.bip39Passphrase))
                 notes.set(java.nio.CharBuffer.wrap(secret.notes))
-                showOptional = secret.hasPassphrase || secret.hasNotes
+                birthday = secret.birthdayHeight?.toString().orEmpty()
+                showOptional = secret.hasPassphrase || secret.hasNotes || secret.hasBirthday
             }
         } finally {
             secret.wipe()
@@ -265,12 +299,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun saveDraft(auth: Authenticator) = launchBusy {
         val current = draft ?: return@launchBusy
         val currentIndex = index ?: return@launchBusy
-        if (!current.input.isChecksumValid()) return@launchBusy
-        // Switching the optional section off means "no passphrase and no notes".
+        if (!current.input.isChecksumValid() || !current.birthdayValid) return@launchBusy
+        // Switching the optional section off means "no passphrase, birthday or notes".
+        val optional = current.showOptional
         val secret = SeedSecret(
             wordIndices = current.input.indices(),
-            bip39Passphrase = if (current.showOptional) current.passphrase.copy() else CharArray(0),
-            notes = if (current.showOptional) current.notes.copy() else CharArray(0),
+            bip39Passphrase = if (optional) current.passphrase.copy() else CharArray(0),
+            notes = if (optional) current.notes.copy() else CharArray(0),
+            birthdayHeight = if (optional) current.birthdayHeight else null,
         )
         try {
             val existing = current.editingId?.let { currentIndex.find(it) }
@@ -354,6 +390,152 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // endregion
 
+    // region Backup export
+
+    fun openBackupExport() {
+        clearBackupExport()
+        backupExport = BackupExportState().apply { regenerate() }
+        navigate(Screen.BackupExport)
+    }
+
+    fun backupFileName(): String {
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date())
+        return "stored-phrase-backup-$date.${BackupFormat.FILE_EXTENSION}"
+    }
+
+    /** Decrypts every entry (one prompt each), encrypts them with the passphrase, writes [uri]. */
+    fun exportBackup(auth: Authenticator, uri: Uri) = launchBusy {
+        val state = backupExport ?: return@launchBusy
+        val currentIndex = index ?: return@launchBusy
+        if (!state.canExport()) return@launchBusy
+        val passphrase = state.passphraseCopy()
+        var entries: List<BackupFormat.Entry> = emptyList()
+        try {
+            entries = repository.exportEntries(auth, currentIndex) { done, total ->
+                progress = ProgressInfo(R.string.backup_progress_decrypt, done, total)
+            }
+            progress = ProgressInfo(R.string.backup_progress_encrypt)
+            val backup = BackupFormat.Backup(
+                manifest = BackupFormat.Manifest(createdAt = System.currentTimeMillis(), generator = "Stored Phrase ${BuildConfig.VERSION_NAME}"),
+                entries = entries,
+            )
+            val file = withContext(Dispatchers.Default) { BackupFormat.encrypt(backup, passphrase) }
+            withContext(Dispatchers.IO) {
+                val resolver = getApplication<Application>().contentResolver
+                (resolver.openOutputStream(uri, "wt") ?: throw IOException("Cannot open $uri")).use { it.write(file) }
+            }
+            state.exportedCount = entries.size
+        } finally {
+            entries.forEach { it.wipe() }
+            passphrase.fill('\u0000')
+            progress = null
+        }
+    }
+
+    private fun clearBackupExport() {
+        backupExport?.wipe()
+        backupExport = null
+    }
+
+    // endregion
+
+    // region Backup import
+
+    fun openBackupImport() {
+        clearBackupImport()
+        backupImport = BackupImportState()
+        navigate(Screen.BackupImport)
+    }
+
+    fun loadBackupFile(uri: Uri) = launchBusy {
+        val state = backupImport ?: return@launchBusy
+        val resolver = getApplication<Application>().contentResolver
+        val bytes = withContext(Dispatchers.IO) {
+            (resolver.openInputStream(uri) ?: throw IOException("Cannot open $uri")).use { input ->
+                val out = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val n = input.read(buffer)
+                    if (n < 0) break
+                    if (out.size() + n > MAX_BACKUP_BYTES) throw BackupFormatException("File too large")
+                    out.write(buffer, 0, n)
+                }
+                out.toByteArray()
+            }
+        }
+        BackupFormat.readHeader(bytes) // fail fast for files that are not backups
+        state.preview?.forEach { it.wipe() }
+        state.preview = null
+        state.file = bytes
+        state.fileName = withContext(Dispatchers.IO) { displayName(uri) }
+    }
+
+    fun decryptBackup() = launchBusy {
+        val state = backupImport ?: return@launchBusy
+        val file = state.file ?: return@launchBusy
+        val passphrase = state.passphrase.copy()
+        try {
+            progress = ProgressInfo(R.string.backup_progress_unlock)
+            val backup = withContext(Dispatchers.Default) { BackupFormat.decrypt(file, passphrase) }
+            val (valid, invalid) = backup.entries.partition(::isImportable)
+            invalid.forEach { it.wipe() }
+            state.skipped = invalid.size
+            state.preview = valid
+            state.passphrase.wipe()
+        } finally {
+            passphrase.fill('\u0000')
+            progress = null
+        }
+    }
+
+    fun importBackup(auth: Authenticator) = launchBusy {
+        val state = backupImport ?: return@launchBusy
+        val entries = state.preview ?: return@launchBusy
+        val currentIndex = index ?: return@launchBusy
+        try {
+            index = repository.importEntries(
+                auth,
+                currentIndex,
+                entries,
+                onProgress = { done, total -> progress = ProgressInfo(R.string.backup_progress_import, done, total) },
+                onCommitted = { updated ->
+                    index = updated
+                    state.imported += 1
+                },
+            )
+            state.done = true
+            state.preview?.forEach { it.wipe() }
+            state.preview = null
+        } finally {
+            progress = null
+        }
+    }
+
+    /** A plain entry is imported only if it decodes and its checksum is valid. */
+    private fun isImportable(entry: BackupFormat.Entry): Boolean = when (entry.kind) {
+        BackupFormat.Kind.PLAIN -> try {
+            val secret = EntryCodec.decode(entry.content)
+            val ok = secret.wordCount == entry.meta.wordCount && Mnemonic.isValid(secret.wordIndices)
+            secret.wipe()
+            ok
+        } catch (e: EntryFormatException) {
+            false
+        }
+        BackupFormat.Kind.LAYER2 -> false
+    }
+
+    private fun displayName(uri: Uri): String? = runCatching {
+        getApplication<Application>().contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+    }.getOrNull()
+
+    private fun clearBackupImport() {
+        backupImport?.wipe()
+        backupImport = null
+    }
+
+    // endregion
+
     // region Settings
 
     fun setAutoLock(seconds: Int) {
@@ -362,6 +544,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // endregion
+
+    fun showMessage(@StringRes text: Int) {
+        message = UiMessage(text)
+    }
 
     fun dismissMessage() {
         message = null
@@ -391,9 +577,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 else -> UiMessage(R.string.error_auth_failed, e.message)
             }
             is VaultKeyInvalidatedException -> {
-                clearReveal()
-                clearDraft()
-                clearQuiz()
+                clearSensitive()
                 index = null
                 session.onLocked()
                 resetTo(Screen.KeyInvalidated)
@@ -402,18 +586,20 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             is VaultCorruptedException -> UiMessage(R.string.error_corrupted)
             is NoStrongBoxException -> UiMessage(R.string.error_no_strongbox)
             is NoLockScreenException -> UiMessage(R.string.error_no_lock_screen)
+            is WrongPassphraseException -> UiMessage(R.string.error_wrong_backup_passphrase)
+            is BackupFormatException -> UiMessage(R.string.error_bad_backup_file)
+            is IOException -> UiMessage(R.string.error_file_io, e.message)
             else -> UiMessage(R.string.error_generic, e.javaClass.simpleName + (e.message?.let { ": $it" } ?: ""))
         }
     }
 
     override fun onCleared() {
-        clearReveal()
-        clearDraft()
-        clearQuiz()
+        clearSensitive()
     }
 
     private companion object {
         const val IDLE_CHECK_INTERVAL_MS = 5_000L
         const val MAX_LABEL_LENGTH = 60
+        const val MAX_BACKUP_BYTES = 16 * 1024 * 1024
     }
 }

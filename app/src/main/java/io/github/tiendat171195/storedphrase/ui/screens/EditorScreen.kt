@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.tiendat171195.storedphrase.R
 import io.github.tiendat171195.storedphrase.core.bip39.Bip39Wordlist
@@ -82,6 +83,7 @@ fun EditorScreen(vm: AppViewModel) {
     val input = draft.input
     val complete = input.isComplete()
     val checksumOk = complete && input.isChecksumValid()
+    val canSave = checksumOk && (!draft.showOptional || draft.birthdayValid)
 
     Scaffold(
         topBar = {
@@ -95,7 +97,7 @@ fun EditorScreen(vm: AppViewModel) {
                     }
                 },
                 actions = {
-                    TextButton(onClick = { vm.saveDraft(auth) }, enabled = checksumOk && !vm.busy) {
+                    TextButton(onClick = { vm.saveDraft(auth) }, enabled = canSave && !vm.busy) {
                         Text(stringResource(R.string.common_save))
                     }
                 },
@@ -165,7 +167,7 @@ fun EditorScreen(vm: AppViewModel) {
                 OptionalFields(draft, onFocused = { wordsActive = false })
                 Button(
                     onClick = { vm.saveDraft(auth) },
-                    enabled = checksumOk && !vm.busy,
+                    enabled = canSave && !vm.busy,
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.common_save)) }
             }
@@ -245,6 +247,23 @@ private fun OptionalFields(draft: SeedDraft, onFocused: () -> Unit) {
     TextButton(onClick = { showPassphrase = !showPassphrase }) {
         Text(stringResource(if (showPassphrase) R.string.hide_text else R.string.show_text))
     }
+    OutlinedTextField(
+        value = draft.birthday,
+        onValueChange = { value ->
+            draft.birthday = value.filter(Char::isDigit).take(10)
+            draft.changed()
+        },
+        label = { Text(stringResource(R.string.birthday_label)) },
+        supportingText = {
+            Text(stringResource(if (draft.birthdayValid) R.string.birthday_hint else R.string.birthday_invalid))
+        },
+        isError = !draft.birthdayValid,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { if (it.isFocused) onFocused() },
+    )
     SecureTextField(
         label = stringResource(R.string.notes_label),
         initial = draft.notes.chars,

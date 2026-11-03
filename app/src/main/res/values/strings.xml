@@ -102,7 +102,7 @@
     <string name="checksum_incomplete">Entered: %1$d / %2$d</string>
     <string name="checksum_ok">✓ Valid BIP39 checksum</string>
     <string name="checksum_bad">✗ Invalid checksum: at least one word is wrong</string>
-    <string name="optional_section">BIP39 passphrase and notes</string>
+    <string name="optional_section">Passphrase, birthday height and notes</string>
     <string name="passphrase_hint">only if your wallet uses one</string>
     <string name="show_text">Show passphrase</string>
     <string name="hide_text">Hide passphrase</string>
@@ -138,6 +138,55 @@
     <string name="about_title">About</string>
     <string name="about_version">Version %s</string>
     <string name="no_network_note">This app has no internet permission. Nothing ever leaves your phone.</string>
+
+    <!-- Backup (M3) -->
+    <string name="auth_backup_title">Back up seed phrase</string>
+    <string name="auth_backup_subtitle">Decrypt inside the secure chip for the backup file</string>
+    <string name="auth_import_title">Import seed phrase</string>
+    <string name="auth_import_subtitle">Encrypt inside this phone\'s secure chip</string>
+    <string name="birthday_label">Birthday height (Zcash wallets such as Zodl)</string>
+    <string name="birthday_hint">Block height shown with the recovery phrase. Leave empty if your wallet has none.</string>
+    <string name="birthday_invalid">Digits only, at most 4294967295</string>
+    <string name="birthday_value">Birthday height: %s</string>
+    <string name="has_birthday_short">birthday</string>
+    <string name="restore_from_backup">Restore from a backup file</string>
+    <string name="backup_section_title">Backup</string>
+    <string name="backup_section_desc">The vault keys can never leave this phone. An encrypted backup file is the only way to move seed phrases to a new phone.</string>
+    <string name="backup_export_title">Back up to file</string>
+    <string name="backup_export_intro">Creates one encrypted file with every seed phrase in this vault (%d). It is protected only by the passphrase below, not by Knox Vault.</string>
+    <string name="backup_storage_advice">Keep the file offline (USB drive, SD card, computer) and the passphrase on paper, in a different place. Avoid cloud storage unless you use the generated passphrase.</string>
+    <string name="backup_passphrase_generated">Generated (recommended)</string>
+    <string name="backup_passphrase_custom">My own</string>
+    <string name="backup_generated_hint">Random words: %1$d · strength about 2^%2$d. Write them down exactly, in this order.</string>
+    <string name="backup_regenerate">Generate another</string>
+    <string name="backup_passphrase_label">Backup passphrase</string>
+    <string name="backup_passphrase_repeat">Repeat the passphrase</string>
+    <string name="backup_passphrase_too_short">Use at least 12 characters (longer is better).</string>
+    <string name="backup_passphrase_mismatch">The two passphrases differ.</string>
+    <string name="backup_confirm_written">I wrote the passphrase down and will keep it apart from the backup file.</string>
+    <string name="backup_auth_note">You will authenticate once per seed phrase: each one is decrypted separately inside the chip.</string>
+    <string name="backup_export_button">Choose where to save and export</string>
+    <string name="backup_export_done">Backup saved. Seed phrases in the file: %d.</string>
+    <string name="backup_export_next_steps">Test it: on a computer, run tools/recover_backup.py from the repository with your passphrase. Then store the file and the passphrase separately.</string>
+    <string name="backup_progress_decrypt">Decrypted %1$d/%2$d</string>
+    <string name="backup_progress_encrypt">Encrypting the backup file (Argon2id)…</string>
+    <string name="backup_progress_unlock">Checking the passphrase (Argon2id)…</string>
+    <string name="backup_progress_import">Imported %1$d/%2$d</string>
+    <string name="backup_import_title">Restore from file</string>
+    <string name="backup_import_intro">Pick a .spbak backup file created by Stored Phrase. Its seed phrases will be re-encrypted with this phone\'s Knox Vault keys and added to this vault.</string>
+    <string name="backup_pick_file">Choose backup file</string>
+    <string name="backup_pick_other">Choose another file</string>
+    <string name="backup_file_selected">File: %s</string>
+    <string name="backup_decrypt_button">Decrypt</string>
+    <string name="backup_preview_title">Found in the backup</string>
+    <string name="backup_skipped">Skipped because damaged or invalid: %d</string>
+    <string name="backup_import_auth_note">You will authenticate once per seed phrase while it is encrypted inside the chip.</string>
+    <string name="backup_import_button">Import into this vault (%d)</string>
+    <string name="backup_import_done">Import finished. Seed phrases added: %d.</string>
+    <string name="error_wrong_backup_passphrase">Wrong passphrase, or the backup file was modified.</string>
+    <string name="error_bad_backup_file">This is not a Stored Phrase backup, or the file is damaged.</string>
+    <string name="error_file_io">Could not read or write the file: %s</string>
+    <string name="error_no_file_app">No app is available to pick a file.</string>
 
     <!-- Errors -->
     <string name="error_generic">Something went wrong: %s</string>

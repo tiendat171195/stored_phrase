@@ -2,6 +2,7 @@ package io.github.tiendat171195.storedphrase.data
 
 import android.security.keystore.UserNotAuthenticatedException
 import androidx.biometric.BiometricPrompt
+import io.github.tiendat171195.storedphrase.core.backup.BackupFormat
 import io.github.tiendat171195.storedphrase.core.vault.BlobFormat
 import io.github.tiendat171195.storedphrase.core.vault.BlobFormat.KeySlot
 import io.github.tiendat171195.storedphrase.core.vault.BlobFormatException
@@ -31,6 +32,18 @@ class VaultRepository(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
 
+    /** Metadata for an entry being written. Null timestamps mean "now" / "keep existing". */
+    data class NewEntry(
+        val label: String,
+        val wordCount: Int,
+        val hasPassphrase: Boolean,
+        val hasNotes: Boolean,
+        val hasBirthday: Boolean,
+        val createdAt: Long? = null,
+        val updatedAt: Long? = null,
+        val verifiedAt: Long? = null,
+    )
+
     fun vaultExists(): Boolean = crypto.keysExist()
 
     fun keyReport(): VaultCrypto.KeyReport? = crypto.currentReport()
@@ -44,27 +57,17 @@ class VaultRepository(
 
     /** Authenticates, then decrypts the index (labels and metadata). */
     suspend fun unlock(auth: Authenticator): VaultIndex {
-        auth.authenticate(AuthReason.UNLOCK, null)
+        auth.authenticate(AuthReason.UNLOCK, null, null)
         return withIndexAuth(auth) { readIndex() }
     }
 
     /** Decrypts one entry inside StrongBox. Needs a fresh authentication bound to this operation. */
     suspend fun reveal(auth: Authenticator, entry: IndexEntry): SeedSecret {
-        val blob = withContext(Dispatchers.IO) { loadBlob(store.readEntry(entry.blobId), KeySlot.SECRET) }
-        val cipher = withContext(Dispatchers.IO) { crypto.decryptCipher(KeySlot.SECRET, blob.iv) }
-        val authorised = auth.authenticate(AuthReason.REVEAL, BiometricPrompt.CryptoObject(cipher))?.cipher ?: cipher
-        return withContext(Dispatchers.IO) {
-            val plaintext = finish(authorised, BlobFormat.entryAad(entry.blobId), blob.ciphertext)
-            try {
-                val secret = parse { EntryCodec.decode(plaintext) }
-                if (secret.wordCount != entry.wordCount) {
-                    secret.wipe()
-                    throw VaultCorruptedException("Entry does not match index")
-                }
-                secret
-            } finally {
-                plaintext.fill(0)
-            }
+        val plaintext = decryptContent(auth, entry, AuthReason.REVEAL, null)
+        try {
+            return decodeChecked(plaintext, entry.wordCount)
+        } finally {
+            plaintext.fill(0)
         }
     }
 
@@ -79,42 +82,19 @@ class VaultRepository(
         label: String,
         secret: SeedSecret,
     ): VaultIndex {
-        val blobId = UUID.randomUUID().toString()
         val plaintext = EntryCodec.encode(secret)
         try {
-            val cipher = withContext(Dispatchers.IO) { crypto.encryptCipher(KeySlot.SECRET) }
-            val authorised = auth.authenticate(AuthReason.SAVE, BiometricPrompt.CryptoObject(cipher))?.cipher ?: cipher
-            withContext(Dispatchers.IO) {
-                authorised.updateAAD(BlobFormat.entryAad(blobId))
-                val ciphertext = authorised.doFinal(plaintext)
-                store.writeEntry(blobId, BlobFormat.encode(BlobFormat.Blob(KeySlot.SECRET, authorised.iv, ciphertext)))
-            }
+            val meta = NewEntry(
+                label = label,
+                wordCount = secret.wordCount,
+                hasPassphrase = secret.hasPassphrase,
+                hasNotes = secret.hasNotes,
+                hasBirthday = secret.hasBirthday,
+            )
+            return storeContent(auth, index, existing, meta, plaintext, AuthReason.SAVE, null)
         } finally {
             plaintext.fill(0)
         }
-
-        val now = clock()
-        val entry = IndexEntry(
-            id = existing?.id ?: UUID.randomUUID().toString(),
-            blobId = blobId,
-            label = label,
-            wordCount = secret.wordCount,
-            hasPassphrase = secret.hasPassphrase,
-            hasNotes = secret.hasNotes,
-            createdAt = existing?.createdAt ?: now,
-            updatedAt = now,
-            // Content may have changed, so the paper copy must be checked again.
-            verifiedAt = null,
-        )
-        val updated = index.upsert(entry)
-        try {
-            writeIndex(auth, updated)
-        } catch (e: Throwable) {
-            withContext(Dispatchers.IO) { store.deleteEntry(blobId) }
-            throw e
-        }
-        if (existing != null) withContext(Dispatchers.IO) { store.deleteEntry(existing.blobId) }
-        return updated
     }
 
     suspend fun delete(auth: Authenticator, index: VaultIndex, entry: IndexEntry): VaultIndex {
@@ -130,10 +110,140 @@ class VaultRepository(
         return updated
     }
 
+    /**
+     * Decrypts every entry for a backup file, one authentication per entry (each key use is
+     * bound to its own prompt). The caller must wipe the returned entries.
+     */
+    suspend fun exportEntries(
+        auth: Authenticator,
+        index: VaultIndex,
+        onProgress: (done: Int, total: Int) -> Unit,
+    ): List<BackupFormat.Entry> {
+        val total = index.entries.size
+        val out = ArrayList<BackupFormat.Entry>(total)
+        try {
+            index.entries.forEachIndexed { i, entry ->
+                onProgress(i, total)
+                val content = decryptContent(auth, entry, AuthReason.BACKUP, "${i + 1}/$total · ${entry.label}")
+                val meta = BackupFormat.EntryMeta(
+                    label = entry.label,
+                    wordCount = entry.wordCount,
+                    hasPassphrase = entry.hasPassphrase,
+                    hasNotes = entry.hasNotes,
+                    hasBirthday = entry.hasBirthday,
+                    createdAt = entry.createdAt,
+                    updatedAt = entry.updatedAt,
+                    verifiedAt = entry.verifiedAt,
+                )
+                out.add(BackupFormat.Entry(BackupFormat.Kind.PLAIN, meta, content))
+            }
+            onProgress(total, total)
+            return out
+        } catch (e: Throwable) {
+            out.forEach { it.wipe() }
+            throw e
+        }
+    }
+
+    /**
+     * Re-encrypts backup entries with this phone's StrongBox keys, one authentication per entry.
+     * The index is committed after each entry; [onCommitted] reports it so a cancelled import
+     * still shows what was already saved.
+     */
+    suspend fun importEntries(
+        auth: Authenticator,
+        index: VaultIndex,
+        entries: List<BackupFormat.Entry>,
+        onProgress: (done: Int, total: Int) -> Unit,
+        onCommitted: (VaultIndex) -> Unit,
+    ): VaultIndex {
+        var current = index
+        entries.forEachIndexed { i, entry ->
+            onProgress(i, entries.size)
+            val meta = NewEntry(
+                label = entry.meta.label,
+                wordCount = entry.meta.wordCount,
+                hasPassphrase = entry.meta.hasPassphrase,
+                hasNotes = entry.meta.hasNotes,
+                hasBirthday = entry.meta.hasBirthday,
+                createdAt = entry.meta.createdAt,
+                updatedAt = entry.meta.updatedAt,
+                verifiedAt = entry.meta.verifiedAt,
+            )
+            current = storeContent(
+                auth, current, null, meta, entry.content, AuthReason.IMPORT, "${i + 1}/${entries.size} · ${entry.meta.label}",
+            )
+            onCommitted(current)
+        }
+        onProgress(entries.size, entries.size)
+        return current
+    }
+
     /** Destroys the keys in StrongBox and deletes every file. */
     suspend fun wipe() = withContext(Dispatchers.IO) {
         crypto.deleteKeys()
         store.wipe()
+    }
+
+    /** Raw plaintext of an entry, decrypted inside StrongBox after an authentication bound to it. */
+    private suspend fun decryptContent(auth: Authenticator, entry: IndexEntry, reason: AuthReason, detail: String?): ByteArray {
+        val blob = withContext(Dispatchers.IO) { loadBlob(store.readEntry(entry.blobId), KeySlot.SECRET) }
+        val cipher = withContext(Dispatchers.IO) { crypto.decryptCipher(KeySlot.SECRET, blob.iv) }
+        val authorised = auth.authenticate(reason, BiometricPrompt.CryptoObject(cipher), detail)?.cipher ?: cipher
+        return withContext(Dispatchers.IO) { finish(authorised, BlobFormat.entryAad(entry.blobId), blob.ciphertext) }
+    }
+
+    private fun decodeChecked(plaintext: ByteArray, expectedWords: Int): SeedSecret {
+        val secret = parse { EntryCodec.decode(plaintext) }
+        if (secret.wordCount != expectedWords) {
+            secret.wipe()
+            throw VaultCorruptedException("Entry does not match index")
+        }
+        return secret
+    }
+
+    /** Writes [content] as a new blob under the secret key and commits the index. */
+    private suspend fun storeContent(
+        auth: Authenticator,
+        index: VaultIndex,
+        existing: IndexEntry?,
+        meta: NewEntry,
+        content: ByteArray,
+        reason: AuthReason,
+        detail: String?,
+    ): VaultIndex {
+        val blobId = UUID.randomUUID().toString()
+        val cipher = withContext(Dispatchers.IO) { crypto.encryptCipher(KeySlot.SECRET) }
+        val authorised = auth.authenticate(reason, BiometricPrompt.CryptoObject(cipher), detail)?.cipher ?: cipher
+        withContext(Dispatchers.IO) {
+            authorised.updateAAD(BlobFormat.entryAad(blobId))
+            val ciphertext = authorised.doFinal(content)
+            store.writeEntry(blobId, BlobFormat.encode(BlobFormat.Blob(KeySlot.SECRET, authorised.iv, ciphertext)))
+        }
+
+        val now = clock()
+        val entry = IndexEntry(
+            id = existing?.id ?: UUID.randomUUID().toString(),
+            blobId = blobId,
+            label = meta.label,
+            wordCount = meta.wordCount,
+            hasPassphrase = meta.hasPassphrase,
+            hasNotes = meta.hasNotes,
+            hasBirthday = meta.hasBirthday,
+            createdAt = existing?.createdAt ?: meta.createdAt ?: now,
+            updatedAt = meta.updatedAt ?: now,
+            // An edited entry must have its paper copy checked again.
+            verifiedAt = meta.verifiedAt,
+        )
+        val updated = index.upsert(entry)
+        try {
+            writeIndex(auth, updated)
+        } catch (e: Throwable) {
+            withContext(Dispatchers.IO) { store.deleteEntry(blobId) }
+            throw e
+        }
+        if (existing != null) withContext(Dispatchers.IO) { store.deleteEntry(existing.blobId) }
+        return updated
     }
 
     private suspend fun readIndex(): VaultIndex = withContext(Dispatchers.IO) {
@@ -172,7 +282,7 @@ class VaultRepository(
     private suspend fun <T> withIndexAuth(auth: Authenticator, block: suspend () -> T): T = try {
         block()
     } catch (e: UserNotAuthenticatedException) {
-        auth.authenticate(AuthReason.UPDATE, null)
+        auth.authenticate(AuthReason.UPDATE, null, null)
         block()
     }
 

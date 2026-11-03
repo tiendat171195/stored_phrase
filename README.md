@@ -24,6 +24,11 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 - **Xem seed dạng lưới.** Mỗi lần xem phải xác thực một lần. Các từ hiện dạng che, chạm từng ô hoặc giữ nút để xem; sau 30 giây không thao tác thì tự xoá khỏi bộ nhớ.
 - **Kiểm tra bản giấy.** App hỏi ngẫu nhiên vài vị trí, bạn gõ từ theo bản giấy; app không bao giờ hiện đáp án.
 - **Tự khoá** khi rời app, tắt màn hình hoặc không thao tác (30 giây đến 5 phút, chỉnh được). Có nút **Xoá sạch kho**: huỷ khoá trong chip, toàn bộ bản mã thành rác.
+- **Birthday height**: ô riêng cho ví Zcash (như Zodl), được mã hoá cùng seed.
+- **File backup mã hoá (`.spbak`)**:
+  - Argon2id + AES-256-GCM, kèm passphrase ngẫu nhiên 7 từ (khoảng 90 bit).
+  - Xuất và nhập qua bộ chọn file của Android, không cần mạng.
+  - Khôi phục được cả khi không còn app, bằng [`tools/recover_backup.py`](tools/recover_backup.py). Đặc tả: [docs/BACKUP_FORMAT.md](docs/BACKUP_FORMAT.md).
 
 ## Trạng thái
 
@@ -32,7 +37,7 @@ Chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Mô hình mối đe 
 | M0 | Khung dự án, hardening manifest, CI | ✅ |
 | M1 | Lõi Knox Vault, màn hình Kiểm tra thiết bị | ✅ |
 | M2 | BIP39 + MVP (nhập, xem, quiz bản giấy, cài đặt) | ✅ chờ test trên máy thật |
-| M3 | File backup mã hoá + script khôi phục Python | — |
+| M3 | File backup mã hoá + script khôi phục Python + birthday height | ✅ |
 | M4 | Passphrase lớp 2 | — |
 | M5 | Xác minh attestation | — |
 | M6 | Hoàn thiện, phát hành | — |
@@ -80,7 +85,7 @@ Khoá trong Knox Vault gắn chặt với máy và không thể xuất ra. Dữ 
 - reset máy, mất máy hoặc máy hỏng,
 - **tắt khoá màn hình** (chuyển về None hoặc Vuốt).
 
-Luôn giữ bản giấy. Từ mốc M3, app có thêm file backup mã hoá để chuyển sang máy mới.
+Luôn giữ bản giấy và tạo **file backup mã hoá** (Cài đặt → Sao lưu ra file). Cất file và passphrase ở hai nơi khác nhau.
 
 ## Cấu trúc
 
@@ -89,3 +94,10 @@ core/   Kotlin/JVM thuần: BIP39, định dạng file, codec (test nhanh trên 
 app/    Android: Keystore/StrongBox, BiometricPrompt, giao diện Compose
 docs/   Kiến trúc, bảo mật, checklist test trên thiết bị
 ```
+
+## Nguồn dữ liệu và giấy phép
+
+- Wordlist BIP39 tiếng Anh: [bitcoin/bips](https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt), có kiểm tra SHA-256.
+- Vector test BIP39: [trezor/python-mnemonic](https://github.com/trezor/python-mnemonic) (MIT).
+- Wordlist passphrase: [EFF large wordlist](https://www.eff.org/dice) (CC BY 3.0 US).
+- Argon2id: [Bouncy Castle](https://www.bouncycastle.org/) (MIT).

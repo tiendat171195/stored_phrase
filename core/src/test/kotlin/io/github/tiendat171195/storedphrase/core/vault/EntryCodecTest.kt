@@ -45,9 +45,26 @@ class EntryCodecTest {
         val good = EntryCodec.encode(SeedSecret(IntArray(12) { it }, "pw".toCharArray()))
         assertFailsWith<EntryFormatException> { EntryCodec.decode(good.copyOf(good.size - 1)) }
         assertFailsWith<EntryFormatException> { EntryCodec.decode(good + 0.toByte()) }
-        assertFailsWith<EntryFormatException> { EntryCodec.decode(good.copyOf().also { it[0] = 2 }) }
+        assertFailsWith<EntryFormatException> { EntryCodec.decode(good.copyOf().also { it[0] = 3 }) }
         assertFailsWith<EntryFormatException> { EntryCodec.decode(good.copyOf().also { it[1] = 13 }) }
         assertFailsWith<EntryFormatException> { EntryCodec.decode(good.copyOf().also { it[2] = 0x08 }) } // index 2048+
+    }
+
+    @Test
+    fun birthdayHeightRoundTripsAndVersion1StillDecodes() {
+        val secret = SeedSecret(IntArray(24) { it }, birthdayHeight = 2_726_400)
+        val encoded = EntryCodec.encode(secret)
+        assertEquals(2_726_400L, EntryCodec.decode(encoded).birthdayHeight)
+        assertEquals(SeedSecret.MAX_BIRTHDAY_HEIGHT, EntryCodec.decode(EntryCodec.encode(SeedSecret(IntArray(12), birthdayHeight = SeedSecret.MAX_BIRTHDAY_HEIGHT))).birthdayHeight)
+        // Version 1 (written by app 0.1.0) had no birthday flag at the end.
+        val v2NoBirthday = EntryCodec.encode(SeedSecret(IntArray(12) { it + 5 }, "pw".toCharArray()))
+        val v1 = v2NoBirthday.copyOf(v2NoBirthday.size - 1).also { it[0] = 1 }
+        val decoded = EntryCodec.decode(v1)
+        assertContentEquals(IntArray(12) { it + 5 }, decoded.wordIndices)
+        assertEquals("pw", String(decoded.bip39Passphrase))
+        assertEquals(null, decoded.birthdayHeight)
+        assertFailsWith<EntryFormatException> { EntryCodec.decode(v2NoBirthday.copyOf().also { it[it.size - 1] = 2 }) }
+        assertFailsWith<IllegalArgumentException> { SeedSecret(IntArray(12), birthdayHeight = -1) }
     }
 
     @Test
